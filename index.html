@@ -88,7 +88,7 @@
         }
 
 
-        .flight-data-section { 
+        .flight-data-section-content { 
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
@@ -107,12 +107,6 @@
             font-size: 10px;
         }
         #conseq-avail-group .calculated { font-size: 10px; }
-        #conseqAvailToggle {
-            width: 20px;
-            height: 20px;
-            padding: 0;
-            font-size: 10px;
-        }
 
 
         .field-group {
@@ -286,7 +280,7 @@
             <!-- SECTION 1: FLIGHT DATA -->
             <section class="data-section">
                 <h2 class="section-title">FLIGHT DATA</h2>
-                <div class="flight-data-section">
+                <div class="flight-data-section-content">
                      <div class="field-group">
                         <label for="flightNumber">FLIGHT NUMBER</label>
                         <input type="text" id="flightNumber" class="field-value" inputmode="numeric">
@@ -351,7 +345,7 @@
                 </div>
                 <div class="timings-row">
                      <div id="conseq-avail-group" class="field-group" style="display: none;">
-                        <label id="conseqAvailLabel" for="conseqAvailToggle">CONSEQ AVAIL FM PRIOR</label>
+                        <label id="conseqAvailLabel">CONSEQ AVAIL FM PRIOR</label>
                         <div class="calculated" id="conseqAvail"></div>
                     </div>
                     <div class="field-group"><label for="std">SCHEDULED OUT</label><input type="text" id="std" class="field-value time-input main-time-field"></div>
@@ -491,7 +485,7 @@
     let syncInterval;
 
     // --- Google API Config ---
-    const API_KEY = 'AIzaSyAET7adeQoNq7RHSHJbxDkAqV2YVZo1v9U'; // You need to get this from Google Cloud Console
+    const API_KEY = 'AIzaSyCmZzV1_ihRfd-DRSdclDdN_vrXsL1HGSs'; // You need to get this from Google Cloud Console
     const CLIENT_ID = '4132612482-166j16qh8hafgmduepknv35ipk4qrrs1.apps.googleusercontent.com'; // You need to get this from Google Cloud Console
     const SCOPES = 'https://www.googleapis.com/auth/drive.file';
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
@@ -789,8 +783,8 @@
             case 'registration': if (value.length === 3) target.blur(); break;
             case 'flightNumber': 
             case 'acNextUseFn':
-                if (value.length === 3) {
-                     target.blur();
+                if (value.length >= 2 && value.length <= 3) {
+                     if (value.length === 3) target.blur();
                 }
                 break;
             case 'from': case 'to': if (value.length === 3) target.blur(); break;
