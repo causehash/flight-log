@@ -709,6 +709,7 @@
         }
     
         function handleInputChange(key, target) {
+            if (!flightData) return;
             let value = target.value;
             flightData[currentSectorIndex][key] = value;
             
@@ -743,6 +744,7 @@
         }
 
         function handleInputBlur(key, target) {
+            if (!flightData) return;
             let value = target.value;
             const data = flightData[currentSectorIndex];
             
@@ -802,6 +804,19 @@
 
                 target.value = formattedValue;
                 data[key] = formattedValue; 
+            }
+            
+            if (key === 'registration') {
+                const formattedReg = data[key];
+                if (currentSectorIndex === 0) { // Sector 1 entry
+                    if(flightData[1]) flightData[1].registration = formattedReg;
+                    if(flightData[2]) flightData[2].registration = formattedReg;
+                    if(flightData[3]) flightData[3].registration = formattedReg;
+                } else if (currentSectorIndex === 2) { // Sector 3 entry
+                    if(flightData[3]) flightData[3].registration = formattedReg;
+                } else if (currentSectorIndex === 4) { // Sector 5 entry
+                    if(flightData[5]) flightData[5].registration = formattedReg;
+                }
             }
 
             if (key === 'date' && value) {
@@ -938,7 +953,7 @@
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : { MZFW: '-', MTOW: '-', MLW: '-', PLW_LIMIT: Infinity, EGT: '-' };
             ui.calculated.mzfw.textContent = limits.MZFW;
-            ui.calculated.mtow.textContent = limits.MTOW;
+            ui.calculated.mtow.textContent = typeof limits.MTOW === 'number' ? limits.MTOW.toFixed(1) : limits.MTOW;
             ui.calculated.mlw.textContent = limits.MLW;
             ui.calculated.egt.textContent = limits.EGT;
 
@@ -1164,6 +1179,7 @@
             for (let i = currentSectorIndex; i < 6; i++) flightData[i][key] = value;
         }
         function toggleCrzTemp() {
+            if (!flightData) return;
             const currentSign = ui.buttons.crzTempToggle.textContent;
             const newSign = currentSign === 'M' ? 'P' : 'M';
             ui.buttons.crzTempToggle.textContent = newSign;
@@ -1171,11 +1187,13 @@
             handleInputBlur('crzTemp', ui.inputs.crzTemp); // Re-format on toggle
         }
         function toggleConseqAvail() {
+            if (!flightData) return;
             const data = flightData[currentSectorIndex];
             data.conseqAvailStrikethrough = !data.conseqAvailStrikethrough;
             saveAndRecalculate();
         }
         function clearCurrentSector() {
+            if (!flightData) return;
             if (confirm("Clear all data for this sector?")) {
                 const cic = flightData[currentSectorIndex].cic;
                 const fo = flightData[currentSectorIndex].fo;
@@ -1188,6 +1206,7 @@
             }
         }
         function clearAllSectors() {
+            if (!flightData) return;
             if (confirm("Clear all data for ALL sectors? This cannot be undone.")) {
                 flightData = Array(6).fill(null).map(() => createEmptySector());
                 saveAndRecalculate();
@@ -1268,12 +1287,14 @@
 
         // AFIR Modal Functions
         function openAfirModal() {
+            if (!flightData) return;
             ui.afirTextarea.value = flightData[currentSectorIndex].afir || '';
             ui.afirModal.style.display = 'block';
             ui.afirTextarea.focus();
         }
 
         function saveAndCloseAfirModal() {
+            if (!flightData) return;
             const newText = ui.afirTextarea.value;
             flightData[currentSectorIndex].afir = newText;
             ui.inputs.afir.value = truncateText(newText, 20);
