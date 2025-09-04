@@ -27,31 +27,6 @@
             -webkit-text-size-adjust: none;
         }
 
-        #auth-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            gap: 15px;
-        }
-
-        #auth-container button {
-            background-color: var(--focus-color);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        #auth-status {
-            font-size: 12px;
-            color: var(--subtle-text-color);
-        }
-
         #app-container {
             padding: 10px 10px 80px 10px;
             display: flex;
@@ -96,6 +71,12 @@
             width: 100%;
             gap: 10px; 
         }
+
+        .flight-data-section-content .field-group label {
+            font-size: clamp(8px, 2.5vw, 10px);
+            white-space: nowrap;
+        }
+
 
         .timings-section { flex-direction: column; font-size: 16px; gap: 0; }
         .timings-row, .timings-sub-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
@@ -265,17 +246,9 @@
         }
         #toolbar button.active { background-color: var(--focus-color); color: white; }
     </style>
-    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
-    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
 </head>
 <body>
-    <div id="auth-container">
-        <div id="auth-status">Sign in to sync your flight log.</div>
-        <button id="auth-button">Sign In with Google</button>
-        <button id="signout-button" style="display: none;">Sign Out</button>
-    </div>
-
-    <div id="app-wrapper" style="display: none;">
+    <div id="app-wrapper">
         <div id="app-container">
             <!-- SECTION 1: FLIGHT DATA -->
             <section class="data-section">
@@ -412,6 +385,9 @@
                     <input type="text" id="crzWind" class="field-value" inputmode="numeric">
                 </div>
                 <div class="field-group" style="grid-column: span 2;"><label for="edto">EDTO</label><input type="text" id="edto" class="field-value" autocapitalize="characters"></div>
+                 <div class="field-group"><label for="histBurn">HIST. BURN</label><input type="text" id="histBurn" class="field-value" inputmode="decimal"></div>
+                <div class="field-group"><label for="histCarriage">HIST. CARRIAGE</label><input type="text" id="histCarriage" class="field-value" inputmode="decimal"></div>
+                <div class="field-group"><label for="afir">AFIR</label><input type="text" id="afir" class="field-value"></div>
             </section>
 
             <!-- SECTION 4: TURNAROUND INFORMATION -->
@@ -480,22 +456,22 @@
     <script type="text/javascript">
     // --- Global Scope Variables ---
     let flightData, currentSectorIndex = 0;
-    let gapiInited = false, gisInited = false, tokenClient;
-    let driveFileId = null, lastRemoteUpdate = null, isSaving = false;
-    let syncInterval;
-
-    // --- Google API Config ---
-    const API_KEY = 'AIzaSyCmZzV1_ihRfd-DRSdclDdN_vrXsL1HGSs'; // You need to get this from Google Cloud Console
-    const CLIENT_ID = '4132612482-166j16qh8hafgmduepknv35ipk4qrrs1.apps.googleusercontent.com'; // You need to get this from Google Cloud Console
-    const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    const FILENAME = 'flight_log_data.json';
-    const IS_PREVIEW_MODE = API_KEY.includes('PASTE_YOUR') || CLIENT_ID.includes('PASTE_YOUR');
     
     // --- UI Elements ---
     let ui = {};
     
-    // --- Core App Logic ---
+    // --- Data Models and Constants ---
+    const iataTimezones = {'SIN':'+8','KUL':'+8','BKK':'+7','CGK':'+7','DPS':'+8','SGN':'+7','HAN':'+7','MNL':'+8','HKG':'+8','TPE':'+8','PVG':'+8','PEK':'+8','CAN':'+8','NRT':'+9','HND':'+9','KIX':'+9','ICN':'+9','PEN':'+8','BWN':'+8','KTI':'+7','SAI':'+7','DAD':'+7','DRW':'+9.5','KTM':'+5.75','BLR':'+5.5','CCU':'+5.5','HYD':'+5.5','MAA':'+5.5','COK':'+5.5','PUS':'+9','HKT':'+7','RGN':'+6.5','CEB':'+8','SUB':'+7','KNO':'+7','BOM':'+5.5','DEL':'+5.5','DAC':'+6','CMB':'+5.5','MLE':'+5','SYD':'+10','MEL':'+10','BNE':'+10','PER':'+8','ADL':'+9.5','AKL':'+12','CHC':'+12','DXB':'+4','AUH':'+4','DOH':'+3','JED':'+3','RUH':'+3','LHR':'+1','CDG':'+2','FRA':'+2','MUC':'+2','ZRH':'+2','AMS':'+2','FCO':'+2','MXP':'+2','BCN':'+2','CPH':'+2','IST':'+3','JFK':'-4','LAX':'-7','SFO':'-7','SEA':'-7','IAH':'-5','EWR':'-4','CPT':'+2','JNB':'+2', 'PNH':'+7', 'CNS':'+10', 'MAN':'+1', 'BRU':'+2', 'LGW':'+1', 'ZRH':'+2', 'AMD':'+5.5', 'PKX':'+8', 'TFU':'+8', 'SZX':'+8', 'XMN':'+8'};
+    const delayCodes = {"ATC DELAY CODES":{"Departure":{"101":"Airport operations hours restriction","102":"Flight Plan not filed","103":"Refile flight plan due route change","104":"Slot time","105":"Late ATC clearance","106":"Flight level not available","107":"Takeoff time constraint","108":"Waypoint time constraint","109":"Departure sequencing due earlier traffic","110":"Start/Push-back sequencing due apron congestion","111":"Long Push back","112":"Long taxi-out","113":"Holding due ground traffic, dep/arr traffic, etc","115":"Delay due to gate-hold procedures","116":"TSAT Delay (A-CDM)"},"Enroute":{"221":"En-route re-routing","222":"En-route holding","223":"En-route speed constraint/control","224":"En-route flight level restriction"},"Arrival":{"331":"Arrival speed control","332":"Radar vector for arrival sequencing","333":"Arrival holding","334":"Instrument let-down and approach","335":"Approach sequencing","336":"Change runway","337":"Reciprocal runway in use","338":"Long taxi-in","339":"Holding for parking bay"},"Others":{"500":"Other ATC Delays (with written explanation)"}},"NON-ATC DEPARTURE DELAY CODES":{"Passenger Services":{"PA":"SQ DCS IT system related","PB":"Awaiting Deportee","PD":"Late acceptance of pax","PE":"Check in error","PI":"Pax reported late for boarding","PJ":"Pax searching for missing property","PK":"Verifying number of pax","PL":"Late flight closure","PM":"Pax Convenience","PN":"Awaiting connecting pax/bge","PO":"Sorting out overbookings","PP":"Pax not seated for departure","PQ":"ICAO Annex 17 offloading of pax/bge","PR":"Handling dissatisfied pax","PS":"Pax receiving medical attention","PT":"Pax decided not to travel","PU":"Boarding congestion","PV":"Awaiting VIP","PW":"Verifying baggage","PY":"Sorting out seating discrepancy","PZ":"Manual check in exercise","PX":"WCHR/MAAS requirements"},"Cargo / Mail":{"CC":"Late acceptance of cargo","CD":"Documentation error","CL":"Late completion of cargo loading","CO":"Offloading cargo","CP":"Late positioning of cargo","CU":"Incorrect build up of ULDS","CX":"Not specified above"},"Acft And Ramp Handling":{"GA":"Late posn of acft due engineering","GB":"Catering","GC":"Late completion of acft cleaning","GD":"Late completion of loadsheet","GE":"Loading equipment u/s","GF":"Refuelling","GG":"Loadsheet error","GH":"Loading difficulties","GI":"Resolving fuel uplift discrepancy","GJ":"Refuelling - non engineering","GL":"Late completion of apron loading","GM":"Late posn of acft due apron congestion","GP":"Late reporting of crew due to transport","GR":"Retrimming acft","GS":"Remote bay handling","GT":"Tow Tug u/s","GU":"Awaiting tow tug","GW":"Late positioning due weather","GX":"Not specified above"},"Technical And Acft Equipment":{"TA":"Awaiting AOG spares","TB":"Awaiting engineering staff","TC":"Acft change","TD":"Acft defect","TE":"Engine defect","TF":"Toilet choke due FOD","TG":"APU u/s (first occurrence)","TH":"Engine start at bay due APU u/s","TM":"Late completion of hanger maintenance","TP":"Awaiting dispensation","TT":"Engineering Operational requirement (e.g. MEL)","TU":"Powered Drive Unit u/s","TV":"Cargo restrain lock missing or u/s","TW":"Wheel change","TY":"Wheel change due FOD","TX":"Not specified above"}},"Damage to Acft":{"":{"DB":"Damage due Birdstrike","DG":"Damage due ground operations","DL":"Damage due Lightning strike","DX":"Other Inflight damage"}},"Flight Operations":{"":{"FA":"Crew change","FB":"Awaiting replacement crew due FTL","FC":"Change of flight plan (initiated by crew)","FD":"Inflight diversion","FE":"Inflight diversion due medical","FF":"Tech crew operational requirement","FG":"Late boarding clearance by tech crew","FH":"Hard Landing inspection","FI":"Heavy/Overweight Landing inspection","FJ":"Crew error","FL":"Late reporting of crew due ...","FM":"Awaiting manuals or charts","FR":"Crew rest","FS":"Crew illness / medical","FT":"Rostering error","FW":"Awaiting crew from another flight","FX":"Not specified above"}}};
+    const flightNumberRoutes = {"104":{from:"SIN",to:"KUL"},"103":{from:"KUL",to:"SIN"},"114":{from:"SIN",to:"KUL"},"113":{from:"KUL",to:"SIN"},"116":{from:"SIN",to:"KUL"},"115":{from:"KUL",to:"SIN"},"128":{from:"SIN",to:"KUL"},"127":{from:"KUL",to:"SIN"},"132":{from:"SIN",to:"PEN"},"131":{from:"PEN",to:"SIN"},"134":{from:"SIN",to:"PEN"},"133":{from:"PEN",to:"SIN"},"136":{from:"SIN",to:"PEN"},"135":{from:"PEN",to:"SIN"},"138":{from:"SIN",to:"PEN"},"137":{from:"PEN",to:"SIN"},"142":{from:"SIN",to:"PEN"},"141":{from:"PEN",to:"SIN"},"148":{from:"SIN",to:"BWN"},"147":{from:"BWN",to:"SIN"},"154":{from:"SIN",to:"KTI"},"153":{from:"KTI",to:"SIN"},"156":{from:"SIN",to:"KTI"},"155":{from:"KTI",to:"SIN"},"158":{from:"SIN",to:"KTI"},"157":{from:"KTI",to:"SIN"},"164":{from:"SIN",to:"SAI"},"163":{from:"SAI",to:"SIN"},"166":{from:"SIN",to:"SAI"},"165":{from:"SAI",to:"SIN"},"172":{from:"SIN",to:"DAD"},"171":{from:"DAD",to:"SIN"},"174":{from:"SIN",to:"DAD"},"173":{from:"DAD",to:"SIN"},"194":{from:"SIN",to:"HAN"},"193":{from:"HAN",to:"SIN"},"251":{from:"SIN",to:"DRW"},"252":{from:"DRW",to:"SIN"},"253":{from:"SIN",to:"DRW"},"254":{from:"DRW",to:"SIN"},"442":{from:"SIN",to:"KTM"},"441":{from:"KTM",to:"SIN"},"508":{from:"SIN",to:"BLR"},"509":{from:"BLR",to:"SIN"},"516":{from:"SIN",to:"CCU"},"517":{from:"CCU",to:"SIN"},"518":{from:"SIN",to:"HYD"},"519":{from:"HYD",to:"SIN"},"524":{from:"SIN",to:"MAA"},"525":{from:"MAA",to:"SIN"},"534":{from:"SIN",to:"COK"},"535":{from:"COK",to:"SIN"},"536":{from:"SIN",to:"COK"},"537":{from:"COK",to:"SIN"},"616":{from:"SIN",to:"PUS"},"615":{from:"PUS",to:"SIN"},"724":{from:"SIN",to:"HKT"},"723":{from:"HKT",to:"SIN"},"726":{from:"SIN",to:"HKT"},"725":{from:"HKT",to:"SIN"},"728":{from:"SIN",to:"HKT"},"727":{from:"HKT",to:"SIN"},"732":{from:"SIN",to:"HKT"},"731":{from:"HKT",to:"SIN"},"736":{from:"SIN",to:"HKT"},"735":{from:"HKT",to:"SIN"},"740":{from:"SIN",to:"HKT"},"739":{from:"HKT",to:"SIN"},"762":{from:"SIN",to:"RGN"},"761":{from:"RGN",to:"SIN"},"900":{from:"SIN",to:"CEB"},"901":{from:"CEB",to:"SIN"},"902":{from:"SIN",to:"CEB"},"903":{from:"CEB",to:"SIN"},"926":{from:"SIN",to:"SUB"},"927":{from:"SUB",to:"SIN"},"928":{from:"SIN",to:"SUB"},"929":{from:"SUB",to:"SIN"},"946":{from:"SIN",to:"DPS"},"947":{from:"DPS",to:"SIN"},"948":{from:"SIN",to:"DPS"},"949":{from:"DPS",to:"SIN"},"990":{from:"SIN",to:"KNO"},"991":{from:"KNO",to:"SIN"},"994":{from:"SIN",to:"KNO"},"995":{from:"KNO",to:"SIN"}};
+    const newRoutes = {"12":{from:"SIN", to:"NRT"},"12":{from:"NRT",to:"LAX"},"11":{from:"LAX", to:"NRT"},"11":{from:"NRT",to:"SIN"},"22":{from:"SIN",to:"EWR"},"21":{from:"EWR",to:"SIN"},"24":{from:"SIN",to:"JFK"},"23":{from:"JFK",to:"SIN"},"26":{from:"SIN", to:"FRA"},"26":{from:"FRA",to:"JFK"},"25":{from:"JFK", to:"FRA"}, "25":{from:"FRA",to:"SIN"},"28":{from:"SIN",to:"SEA"},"27":{from:"SEA",to:"SIN"},"32":{from:"SIN",to:"SFO"},"31":{from:"SFO",to:"SIN"},"34":{from:"SIN",to:"SFO"},"33":{from:"SFO",to:"SIN"},"36":{from:"SIN",to:"LAX"},"35":{from:"LAX",to:"SIN"},"38":{from:"SIN",to:"LAX"},"37":{from:"LAX",to:"SIN"},"52":{from:"SIN",to:"MAN"},"51":{from:"IAH", to:"MAN"}, "51":{from:"MAN",to:"SIN"},"106":{from:"SIN",to:"KUL"},"105":{from:"KUL",to:"SIN"},"108":{from:"SIN",to:"KUL"},"107":{from:"KUL",to:"SIN"},"122":{from:"SIN",to:"KUL"},"121":{from:"KUL",to:"SIN"},"126":{from:"SIN",to:"KUL"},"125":{from:"KUL",to:"SIN"},"154":{from:"SIN", to:"PNH"},"153":{from:"PNH",to:"SIN"}, "156":{from:"SIN", to:"PNH"}, "155":{from:"PNH",to:"SIN"}, "158":{from:"SIN", to:"PNH"}, "157":{from:"PNH",to:"SIN"},"178":{from:"SIN",to:"SGN"},"177":{from:"SGN",to:"SIN"},"184":{from:"SIN",to:"SGN"},"183":{from:"SGN",to:"SIN"},"186":{from:"SIN",to:"SGN"},"185":{from:"SGN",to:"SIN"},"192":{from:"SIN",to:"HAN"},"191":{from:"HAN",to:"SIN"},"203":{from:"SIN",to:"CNS"},"204":{from:"CNS",to:"SIN"},"207":{from:"SIN",to:"MEL"},"208":{from:"MEL",to:"SIN"},"211":{from:"SIN",to:"SYD"},"212":{from:"SYD",to:"SIN"},"213":{from:"SIN",to:"PER"},"214":{from:"PER",to:"SIN"},"215":{from:"SIN",to:"PER"},"216":{from:"PER",to:"SIN"},"217":{from:"SIN",to:"MEL"},"218":{from:"MEL",to:"SIN"},"220":{from:"MEL",to:"SIN"},"221":{from:"SIN",to:"SYD"},"232":{from:"SYD",to:"SIN"},"223":{from:"SIN",to:"PER"},"225":{from:"SIN",to:"PER"},"224":{from:"PER",to:"SIN"},"227":{from:"SIN",to:"MEL"},"238":{from:"MEL",to:"SIN"},"231":{from:"SIN",to:"SYD"},"222":{from:"SYD",to:"SIN"},"235":{from:"SIN",to:"BNE"},"256":{from:"BNE",to:"SIN"},"237":{from:"SIN",to:"MEL"},"228":{from:"MEL",to:"SIN"},"241":{from:"SIN",to:"SYD"},"242":{from:"SYD",to:"SIN"},"245":{from:"SIN",to:"BNE"},"246":{from:"BNE",to:"SIN"},"247":{from:"SIN",to:"MEL"},"248":{from:"MEL",to:"SIN"},"255":{from:"SIN",to:"BNE"},"236":{from:"BNE",to:"SIN"},"265":{from:"SIN",to:"BNE"},"266":{from:"BNE",to:"SIN"},"277":{from:"SIN",to:"ADL"},"276":{from:"ADL",to:"SIN"},"279":{from:"SIN",to:"ADL"},"278":{from:"ADL",to:"SIN"},"285":{from:"SIN",to:"AKL"},"286":{from:"AKL",to:"SIN"},"297":{from:"SIN",to:"CHC"},"298":{from:"CHC",to:"SIN"},"302":{from:"SIN",to:"MAN"},"301":{from:"MAN",to:"SIN"},"304":{from:"SIN",to:"BRU"},"303":{from:"BRU",to:"SIN"},"306":{from:"SIN",to:"LHR"},"305":{from:"LHR",to:"SIN"},"308":{from:"SIN",to:"LHR"},"319":{from:"LHR",to:"SIN"},"312":{from:"SIN",to:"LGW"},"309":{from:"LGW",to:"SIN"},"318":{from:"SIN",to:"LHR"},"321":{from:"LHR",to:"SIN"},"322":{from:"SIN",to:"LHR"},"317":{from:"LHR",to:"SIN"},"324":{from:"SIN",to:"AMS"},"323":{from:"AMS",to:"SIN"},"326":{from:"SIN",to:"FRA"},"325":{from:"FRA",to:"SIN"},"328":{from:"SIN",to:"MUC"},"327":{from:"MUC",to:"SIN"},"332":{from:"SIN",to:"CDG"},"331":{from:"CDG",to:"SIN"},"336":{from:"SIN",to:"CDG"},"335":{from:"CDG",to:"SIN"},"346":{from:"SIN",to:"ZRH"},"345":{from:"ZRH",to:"SIN"},"352":{from:"SIN",to:"CPH"},"351":{from:"CPH",to:"SIN"},"356":{from:"SIN",to:"MXP"},"355":{from:"MXP",to:"SIN"},"366":{from:"SIN",to:"FCO"},"365":{from:"FCO",to:"SIN"},"378":{from:"SIN",to:"MXP"},"377":{from:"MXP",to:"SIN"},"388":{from:"SIN",to:"BCN"},"387":{from:"BCN",to:"SIN"},"392":{from:"SIN",to:"IST"},"391":{from:"IST",to:"SIN"},"402":{from:"SIN",to:"DEL"},"401":{from:"DEL",to:"SIN"},"406":{from:"SIN",to:"DEL"},"403":{from:"DEL",to:"SIN"},"422":{from:"SIN",to:"BOM"},"421":{from:"BOM",to:"SIN"},"432":{from:"SIN",to:"MLE"},"438":{from:"SIN",to:"MLE"},"446":{from:"SIN",to:"DAC"},"447":{from:"DAC",to:"SIN"},"468":{from:"SIN",to:"CMB"},"469":{from:"CMB",to:"SIN"},"478":{from:"SIN",to:"JNB"},"479":{from:"CPT", to:"JNB"},"479":{from:"JNB",to:"SIN"},"482":{from:"SIN",to:"JNB"},"481":{from:"JNB",to:"SIN"},"494":{from:"SIN",to:"DXB"},"495":{from:"DXB",to:"SIN"},"504":{from:"SIN",to:"AMD"},"505":{from:"AMD",to:"SIN"},"510":{from:"SIN",to:"BLR"},"511":{from:"BLR",to:"SIN"},"522":{from:"SIN",to:"HYD"},"523":{from:"HYD",to:"SIN"},"528":{from:"SIN",to:"MAA"},"529":{from:"MAA",to:"SIN"},"600":{from:"SIN",to:"ICN"},"601":{from:"ICN",to:"SIN"},"606":{from:"SIN",to:"ICN"},"605":{from:"ICN",to:"SIN"},"608":{from:"SIN",to:"ICN"},"607":{from:"ICN",to:"SIN"},"612":{from:"SIN",to:"ICN"},"611":{from:"ICN",to:"SIN"},"618":{from:"SIN",to:"KIX"},"619":{from:"KIX",to:"SIN"},"620":{from:"SIN",to:"KIX"},"621":{from:"KIX",to:"SIN"},"622":{from:"SIN",to:"KIX"},"623":{from:"KIX",to:"SIN"},"632":{from:"SIN",to:"HND"},"633":{from:"HND",to:"SIN"},"634":{from:"SIN",to:"HND"},"635":{from:"HND",to:"SIN"},"636":{from:"SIN",to:"HND"},"631":{from:"HND",to:"SIN"},"638":{from:"SIN",to:"NRT"},"637":{from:"NRT",to:"SIN"},"656":{from:"SIN",to:"FUK"},"655":{from:"FUK",to:"SIN"},"672":{from:"SIN",to:"NGO"},"671":{from:"NGO",to:"SIN"},"706":{from:"SIN",to:"BKK"},"705":{from:"BKK",to:"SIN"},"708":{from:"SIN",to:"BKK"},"707":{from:"BKK",to:"SIN"},"710":{from:"SIN",to:"BKK"},"709":{from:"BKK",to:"SIN"},"712":{from:"SIN",to:"BKK"},"711":{from:"BKK",to:"SIN"},"714":{from:"SIN",to:"BKK"},"713":{from:"BKK",to:"SIN"},"720":{from:"SIN",to:"BKK"},"719":{from:"BKK",to:"SIN"},"800":{from:"SIN",to:"PEK"},"805":{from:"PEK",to:"SIN"},"802":{from:"SIN",to:"PEK"},"807":{from:"PEK",to:"SIN"},"806":{from:"SIN",to:"PEK"},"801":{from:"PEK",to:"SIN"},"810":{from:"SIN",to:"PKX"},"811":{from:"PKX",to:"SIN"},"818":{from:"SIN",to:"CKG"},"819":{from:"CKG",to:"SIN"},"826":{from:"SIN",to:"PVG"},"827":{from:"PVG",to:"SIN"},"828":{from:"SIN",to:"PVG"},"831":{from:"PVG",to:"SIN"},"830":{from:"SIN",to:"PVG"},"833":{from:"PVG",to:"SIN"},"836":{from:"SIN",to:"PVG"},"825":{from:"PVG",to:"SIN"},"842":{from:"SIN",to:"TFU"},"843":{from:"TFU",to:"SIN"},"850":{from:"SIN",to:"CAN"},"851":{from:"CAN",to:"SIN"},"852":{from:"SIN",to:"CAN"},"853":{from:"CAN",to:"SIN"},"856":{from:"SIN",to:"SZX"},"857":{from:"SZX",to:"SIN"},"868":{from:"SIN",to:"XMN"},"869":{from:"XMN",to:"SIN"},"874":{from:"SIN",to:"HKG"},"875":{from:"HKG",to:"SIN"},"876":{from:"SIN",to:"TPE"},"877":{from:"TPE",to:"SIN"},"878":{from:"SIN",to:"TPE"},"879":{from:"TPE",to:"SIN"},"882":{from:"SIN",to:"HKG"},"883":{from:"HKG",to:"SIN"},"892":{from:"SIN",to:"HKG"},"893":{from:"HKG",to:"SIN"},"894":{from:"SIN",to:"HKG"},"895":{from:"HKG",to:"SIN"},"898":{from:"SIN",to:"HKG"},"899":{from:"HKG",to:"SIN"},"910":{from:"SIN",to:"MNL"},"917":{from:"MNL",to:"SIN"},"912":{from:"SIN",to:"MNL"},"919":{from:"MNL",to:"SIN"},"916":{from:"SIN",to:"MNL"},"921":{from:"MNL",to:"SIN"},"918":{from:"SIN",to:"MNL"},"915":{from:"MNL",to:"SIN"},"922":{from:"SIN",to:"SUB"},"923":{from:"SUB",to:"SIN"},"934":{from:"SIN",to:"DPS"},"935":{from:"DPS",to:"SIN"},"936":{from:"SIN",to:"DPS"},"937":{from:"DPS",to:"SIN"},"938":{from:"SIN",to:"DPS"},"939":{from:"DPS",to:"SIN"},"944":{from:"SIN",to:"DPS"},"945":{from:"DPS",to:"SIN"},"950":{from:"SIN",to:"CGK"},"953":{from:"CGK",to:"SIN"},"952":{from:"SIN",to:"CGK"},"955":{from:"CGK",to:"SIN"},"956":{from:"SIN",to:"CGK"},"957":{from:"CGK",to:"SIN"},"958":{from:"SIN",to:"CGK"},"959":{from:"CGK",to:"SIN"},"960":{from:"SIN",to:"CGK"},"961":{from:"CGK",to:"SIN"},"962":{from:"SIN",to:"CGK"},"963":{from:"CGK",to:"SIN"},"964":{from:"SIN",to:"CGK"},"965":{from:"CGK",to:"SIN"},"968":{from:"SIN",to:"CGK"},"951":{from:"CGK",to:"SIN"}};
+    Object.assign(flightNumberRoutes, newRoutes);
+    const aircraftLimits = {
+        MAX: { MZFW: 65.9, MTOW: 82.1, MLW: 69.3, PLW_LIMIT: 68.3, EGT: '753°C' },
+        NG:  { MZFW: 62.7, MTOW: 79.0, MLW: 66.3, PLW_LIMIT: 65.3, EGT: '725°C' }
+    };
+    
+    // --- App Startup and Data Sync ---
     function runAppLogic() {
         document.addEventListener('DOMContentLoaded', () => {
             ui = {
@@ -503,7 +479,6 @@
                     flightNumber: document.getElementById('flightNumber'), date: document.getElementById('date'), from: document.getElementById('from'), to: document.getElementById('to'), cic: document.getElementById('cic'), fo: document.getElementById('fo'), registration: document.getElementById('registration'), report: document.getElementById('report'), depGate: document.getElementById('depGate'),
                     out: document.getElementById('out'), taxi: document.getElementById('taxi'), off: document.getElementById('off'), on: document.getElementById('on'), in: document.getElementById('in'), std: document.getElementById('std'), eft: document.getElementById('eft'), sta: document.getElementById('sta'),
                     fromTz: document.getElementById('from-tz'), toTz: document.getElementById('to-tz'),
-                    // Flight Planning
                     sid: document.getElementById('sid'), star: document.getElementById('star'), app: document.getElementById('app'), rwy: document.getElementById('rwy'), trans: document.getElementById('trans'), elev: document.getElementById('elev'),
                     crew: document.getElementById('crew'), pax: document.getElementById('pax'), ezfw1: document.getElementById('ezfw1'), ezfw2: document.getElementById('ezfw2'), azfw: document.getElementById('azfw'),
                     fuel: document.getElementById('fuel'), burn: document.getElementById('burn'), altn: document.getElementById('altn'), thirtyMin: document.getElementById('thirtyMin'), cont: document.getElementById('cont'),
@@ -511,6 +486,7 @@
                     turb: document.getElementById('turb'), terr: document.getElementById('terr'), flightLevels: document.getElementById('flightLevels'), optiClimb1: document.getElementById('optiClimb1'),
                     optiClimb2: document.getElementById('optiClimb2'), crzWind: document.getElementById('crzWind'), crzTemp: document.getElementById('crzTemp'), edto: document.getElementById('edto'), arrGate: document.getElementById('arrGate'),
                     eta: document.getElementById('eta'), acNextUseFn: document.getElementById('acNextUseFn'), acNextUseStd: document.getElementById('acNextUseStd'),
+                    histBurn: document.getElementById('histBurn'), histCarriage: document.getElementById('histCarriage'), afir: document.getElementById('afir')
                 },
                 buttons: {
                     crzTempToggle: document.getElementById('crzTempToggle')
@@ -524,7 +500,6 @@
                     stdl: document.getElementById('stdl'), aft: document.getElementById('aft'), aftd: document.getElementById('aftd'), blk: document.getElementById('blk'), abt: document.getElementById('abt'), sib: document.getElementById('sib'), stal: document.getElementById('stal'),
                     gndTimeAvail: document.getElementById('gndTimeAvail'), myNextFlt: document.getElementById('myNextFlt'),
                     conseqAvail: document.getElementById('conseqAvail'),
-                    // Flight Planning
                     pob: document.getElementById('pob'), mzfw: document.getElementById('mzfw'), reserves: document.getElementById('reserves'), ptow: document.getElementById('ptow'), mtow: document.getElementById('mtow'),
                     plw: document.getElementById('plw'), mlw: document.getElementById('mlw'), egt: document.getElementById('egt'), tankerDelta: document.getElementById('tankerDelta'), acNextUseRoute: document.getElementById('acNextUseRoute'), gndTimeForAc: document.getElementById('gndTimeForAc')
                 },
@@ -544,135 +519,16 @@
                     container: document.getElementById('delay-codes-container'),
                     quickRefContainer: document.getElementById('quick-ref-delays-container')
                 },
-                auth: {
-                    container: document.getElementById('auth-container'),
-                    status: document.getElementById('auth-status'),
-                    authButton: document.getElementById('auth-button'),
-                    signoutButton: document.getElementById('signout-button')
-                },
                 appWrapper: document.getElementById('app-wrapper')
             };
             
-            if (IS_PREVIEW_MODE) {
-                console.log("Running in Preview Mode. Sync is disabled.");
-                ui.auth.container.style.display = 'none';
-                ui.appWrapper.style.display = 'block';
-                loadFromLocalStorage();
-            }
-
+            document.getElementById('app-wrapper').style.display = 'block';
+            loadFromLocalStorage();
             initializeEventListeners();
         });
     }
 
-    // --- Data Models and Constants ---
-    const iataTimezones = {'SIN':'+8','KUL':'+8','BKK':'+7','CGK':'+7','DPS':'+8','SGN':'+7','HAN':'+7','MNL':'+8','HKG':'+8','TPE':'+8','PVG':'+8','PEK':'+8','CAN':'+8','NRT':'+9','HND':'+9','KIX':'+9','ICN':'+9','PEN':'+8','BWN':'+8','KTI':'+7','SAI':'+7','DAD':'+7','DRW':'+9.5','KTM':'+5.75','BLR':'+5.5','CCU':'+5.5','HYD':'+5.5','MAA':'+5.5','COK':'+5.5','PUS':'+9','HKT':'+7','RGN':'+6.5','CEB':'+8','SUB':'+7','KNO':'+7','BOM':'+5.5','DEL':'+5.5','DAC':'+6','CMB':'+5.5','MLE':'+5','SYD':'+10','MEL':'+10','BNE':'+10','PER':'+8','ADL':'+9.5','AKL':'+12','CHC':'+12','DXB':'+4','AUH':'+4','DOH':'+3','JED':'+3','RUH':'+3','LHR':'+1','CDG':'+2','FRA':'+2','MUC':'+2','ZRH':'+2','AMS':'+2','FCO':'+2','MXP':'+2','BCN':'+2','CPH':'+2','IST':'+3','JFK':'-4','LAX':'-7','SFO':'-7','SEA':'-7','IAH':'-5','EWR':'-4','CPT':'+2','JNB':'+2', 'PNH':'+7', 'CNS':'+10', 'MAN':'+1', 'BRU':'+2', 'LGW':'+1', 'ZRH':'+2', 'AMD':'+5.5', 'PKX':'+8', 'TFU':'+8', 'SZX':'+8', 'XMN':'+8'};
-    const delayCodes = {"ATC DELAY CODES":{"Departure":{"101":"Airport operations hours restriction","102":"Flight Plan not filed","103":"Refile flight plan due route change","104":"Slot time","105":"Late ATC clearance","106":"Flight level not available","107":"Takeoff time constraint","108":"Waypoint time constraint","109":"Departure sequencing due earlier traffic","110":"Start/Push-back sequencing due apron congestion","111":"Long Push back","112":"Long taxi-out","113":"Holding due ground traffic, dep/arr traffic, etc","115":"Delay due to gate-hold procedures","116":"TSAT Delay (A-CDM)"},"Enroute":{"221":"En-route re-routing","222":"En-route holding","223":"En-route speed constraint/control","224":"En-route flight level restriction"},"Arrival":{"331":"Arrival speed control","332":"Radar vector for arrival sequencing","333":"Arrival holding","334":"Instrument let-down and approach","335":"Approach sequencing","336":"Change runway","337":"Reciprocal runway in use","338":"Long taxi-in","339":"Holding for parking bay"},"Others":{"500":"Other ATC Delays (with written explanation)"}},"NON-ATC DEPARTURE DELAY CODES":{"Passenger Services":{"PA":"SQ DCS IT system related","PB":"Awaiting Deportee","PD":"Late acceptance of pax","PE":"Check in error","PI":"Pax reported late for boarding","PJ":"Pax searching for missing property","PK":"Verifying number of pax","PL":"Late flight closure","PM":"Pax Convenience","PN":"Awaiting connecting pax/bge","PO":"Sorting out overbookings","PP":"Pax not seated for departure","PQ":"ICAO Annex 17 offloading of pax/bge","PR":"Handling dissatisfied pax","PS":"Pax receiving medical attention","PT":"Pax decided not to travel","PU":"Boarding congestion","PV":"Awaiting VIP","PW":"Verifying baggage","PY":"Sorting out seating discrepancy","PZ":"Manual check in exercise","PX":"WCHR/MAAS requirements"},"Cargo / Mail":{"CC":"Late acceptance of cargo","CD":"Documentation error","CL":"Late completion of cargo loading","CO":"Offloading cargo","CP":"Late positioning of cargo","CU":"Incorrect build up of ULDS","CX":"Not specified above"},"Acft And Ramp Handling":{"GA":"Late posn of acft due engineering","GB":"Catering","GC":"Late completion of acft cleaning","GD":"Late completion of loadsheet","GE":"Loading equipment u/s","GF":"Refuelling","GG":"Loadsheet error","GH":"Loading difficulties","GI":"Resolving fuel uplift discrepancy","GJ":"Refuelling - non engineering","GL":"Late completion of apron loading","GM":"Late posn of acft due apron congestion","GP":"Late reporting of crew due to transport","GR":"Retrimming acft","GS":"Remote bay handling","GT":"Tow Tug u/s","GU":"Awaiting tow tug","GW":"Late positioning due weather","GX":"Not specified above"},"Technical And Acft Equipment":{"TA":"Awaiting AOG spares","TB":"Awaiting engineering staff","TC":"Acft change","TD":"Acft defect","TE":"Engine defect","TF":"Toilet choke due FOD","TG":"APU u/s (first occurrence)","TH":"Engine start at bay due APU u/s","TM":"Late completion of hanger maintenance","TP":"Awaiting dispensation","TT":"Engineering Operational requirement (e.g. MEL)","TU":"Powered Drive Unit u/s","TV":"Cargo restrain lock missing or u/s","TW":"Wheel change","TY":"Wheel change due FOD","TX":"Not specified above"}},"Damage to Acft":{"":{"DB":"Damage due Birdstrike","DG":"Damage due ground operations","DL":"Damage due Lightning strike","DX":"Other Inflight damage"}},"Flight Operations":{"":{"FA":"Crew change","FB":"Awaiting replacement crew due FTL","FC":"Change of flight plan (initiated by crew)","FD":"Inflight diversion","FE":"Inflight diversion due medical","FF":"Tech crew operational requirement","FG":"Late boarding clearance by tech crew","FH":"Hard Landing inspection","FI":"Heavy/Overweight Landing inspection","FJ":"Crew error","FL":"Late reporting of crew due ...","FM":"Awaiting manuals or charts","FR":"Crew rest","FS":"Crew illness / medical","FT":"Rostering error","FW":"Awaiting crew from another flight","FX":"Not specified above"}}};
-    const flightNumberRoutes = {"104":{from:"SIN",to:"KUL"},"103":{from:"KUL",to:"SIN"},"114":{from:"SIN",to:"KUL"},"113":{from:"KUL",to:"SIN"},"116":{from:"SIN",to:"KUL"},"115":{from:"KUL",to:"SIN"},"128":{from:"SIN",to:"KUL"},"127":{from:"KUL",to:"SIN"},"132":{from:"SIN",to:"PEN"},"131":{from:"PEN",to:"SIN"},"134":{from:"SIN",to:"PEN"},"133":{from:"PEN",to:"SIN"},"136":{from:"SIN",to:"PEN"},"135":{from:"PEN",to:"SIN"},"138":{from:"SIN",to:"PEN"},"137":{from:"PEN",to:"SIN"},"142":{from:"SIN",to:"PEN"},"141":{from:"PEN",to:"SIN"},"148":{from:"SIN",to:"BWN"},"147":{from:"BWN",to:"SIN"},"154":{from:"SIN",to:"KTI"},"153":{from:"KTI",to:"SIN"},"156":{from:"SIN",to:"KTI"},"155":{from:"KTI",to:"SIN"},"158":{from:"SIN",to:"KTI"},"157":{from:"KTI",to:"SIN"},"164":{from:"SIN",to:"SAI"},"163":{from:"SAI",to:"SIN"},"166":{from:"SIN",to:"SAI"},"165":{from:"SAI",to:"SIN"},"172":{from:"SIN",to:"DAD"},"171":{from:"DAD",to:"SIN"},"174":{from:"SIN",to:"DAD"},"173":{from:"DAD",to:"SIN"},"194":{from:"SIN",to:"HAN"},"193":{from:"HAN",to:"SIN"},"251":{from:"SIN",to:"DRW"},"252":{from:"DRW",to:"SIN"},"253":{from:"SIN",to:"DRW"},"254":{from:"DRW",to:"SIN"},"442":{from:"SIN",to:"KTM"},"441":{from:"KTM",to:"SIN"},"508":{from:"SIN",to:"BLR"},"509":{from:"BLR",to:"SIN"},"516":{from:"SIN",to:"CCU"},"517":{from:"CCU",to:"SIN"},"518":{from:"SIN",to:"HYD"},"519":{from:"HYD",to:"SIN"},"524":{from:"SIN",to:"MAA"},"525":{from:"MAA",to:"SIN"},"534":{from:"SIN",to:"COK"},"535":{from:"COK",to:"SIN"},"536":{from:"SIN",to:"COK"},"537":{from:"COK",to:"SIN"},"616":{from:"SIN",to:"PUS"},"615":{from:"PUS",to:"SIN"},"724":{from:"SIN",to:"HKT"},"723":{from:"HKT",to:"SIN"},"726":{from:"SIN",to:"HKT"},"725":{from:"HKT",to:"SIN"},"728":{from:"SIN",to:"HKT"},"727":{from:"HKT",to:"SIN"},"732":{from:"SIN",to:"HKT"},"731":{from:"HKT",to:"SIN"},"736":{from:"SIN",to:"HKT"},"735":{from:"HKT",to:"SIN"},"740":{from:"SIN",to:"HKT"},"739":{from:"HKT",to:"SIN"},"762":{from:"SIN",to:"RGN"},"761":{from:"RGN",to:"SIN"},"900":{from:"SIN",to:"CEB"},"901":{from:"CEB",to:"SIN"},"902":{from:"SIN",to:"CEB"},"903":{from:"CEB",to:"SIN"},"926":{from:"SIN",to:"SUB"},"927":{from:"SUB",to:"SIN"},"928":{from:"SIN",to:"SUB"},"929":{from:"SUB",to:"SIN"},"946":{from:"SIN",to:"DPS"},"947":{from:"DPS",to:"SIN"},"948":{from:"SIN",to:"DPS"},"949":{from:"DPS",to:"SIN"},"990":{from:"SIN",to:"KNO"},"991":{from:"KNO",to:"SIN"},"994":{from:"SIN",to:"KNO"},"995":{from:"KNO",to:"SIN"}};
-    const newRoutes = {"12":{from:"SIN", to:"NRT"},"12":{from:"NRT",to:"LAX"},"11":{from:"LAX", to:"NRT"},"11":{from:"NRT",to:"SIN"},"22":{from:"SIN",to:"EWR"},"21":{from:"EWR",to:"SIN"},"24":{from:"SIN",to:"JFK"},"23":{from:"JFK",to:"SIN"},"26":{from:"SIN", to:"FRA"},"26":{from:"FRA",to:"JFK"},"25":{from:"JFK", to:"FRA"}, "25":{from:"FRA",to:"SIN"},"28":{from:"SIN",to:"SEA"},"27":{from:"SEA",to:"SIN"},"32":{from:"SIN",to:"SFO"},"31":{from:"SFO",to:"SIN"},"34":{from:"SIN",to:"SFO"},"33":{from:"SFO",to:"SIN"},"36":{from:"SIN",to:"LAX"},"35":{from:"LAX",to:"SIN"},"38":{from:"SIN",to:"LAX"},"37":{from:"LAX",to:"SIN"},"52":{from:"SIN",to:"MAN"},"51":{from:"IAH", to:"MAN"}, "51":{from:"MAN",to:"SIN"},"106":{from:"SIN",to:"KUL"},"105":{from:"KUL",to:"SIN"},"108":{from:"SIN",to:"KUL"},"107":{from:"KUL",to:"SIN"},"122":{from:"SIN",to:"KUL"},"121":{from:"KUL",to:"SIN"},"126":{from:"SIN",to:"KUL"},"125":{from:"KUL",to:"SIN"},"154":{from:"SIN", to:"PNH"},"153":{from:"PNH",to:"SIN"}, "156":{from:"SIN", to:"PNH"}, "155":{from:"PNH",to:"SIN"}, "158":{from:"SIN", to:"PNH"}, "157":{from:"PNH",to:"SIN"},"178":{from:"SIN",to:"SGN"},"177":{from:"SGN",to:"SIN"},"184":{from:"SIN",to:"SGN"},"183":{from:"SGN",to:"SIN"},"186":{from:"SIN",to:"SGN"},"185":{from:"SGN",to:"SIN"},"192":{from:"SIN",to:"HAN"},"191":{from:"HAN",to:"SIN"},"203":{from:"SIN",to:"CNS"},"204":{from:"CNS",to:"SIN"},"207":{from:"SIN",to:"MEL"},"208":{from:"MEL",to:"SIN"},"211":{from:"SIN",to:"SYD"},"212":{from:"SYD",to:"SIN"},"213":{from:"SIN",to:"PER"},"214":{from:"PER",to:"SIN"},"215":{from:"SIN",to:"PER"},"216":{from:"PER",to:"SIN"},"217":{from:"SIN",to:"MEL"},"218":{from:"MEL",to:"SIN"},"220":{from:"MEL",to:"SIN"},"221":{from:"SIN",to:"SYD"},"232":{from:"SYD",to:"SIN"},"223":{from:"SIN",to:"PER"},"225":{from:"SIN",to:"PER"},"224":{from:"PER",to:"SIN"},"227":{from:"SIN",to:"MEL"},"238":{from:"MEL",to:"SIN"},"231":{from:"SIN",to:"SYD"},"222":{from:"SYD",to:"SIN"},"235":{from:"SIN",to:"BNE"},"256":{from:"BNE",to:"SIN"},"237":{from:"SIN",to:"MEL"},"228":{from:"MEL",to:"SIN"},"241":{from:"SIN",to:"SYD"},"242":{from:"SYD",to:"SIN"},"245":{from:"SIN",to:"BNE"},"246":{from:"BNE",to:"SIN"},"247":{from:"SIN",to:"MEL"},"248":{from:"MEL",to:"SIN"},"255":{from:"SIN",to:"BNE"},"236":{from:"BNE",to:"SIN"},"265":{from:"SIN",to:"BNE"},"266":{from:"BNE",to:"SIN"},"277":{from:"SIN",to:"ADL"},"276":{from:"ADL",to:"SIN"},"279":{from:"SIN",to:"ADL"},"278":{from:"ADL",to:"SIN"},"285":{from:"SIN",to:"AKL"},"286":{from:"AKL",to:"SIN"},"297":{from:"SIN",to:"CHC"},"298":{from:"CHC",to:"SIN"},"302":{from:"SIN",to:"MAN"},"301":{from:"MAN",to:"SIN"},"304":{from:"SIN",to:"BRU"},"303":{from:"BRU",to:"SIN"},"306":{from:"SIN",to:"LHR"},"305":{from:"LHR",to:"SIN"},"308":{from:"SIN",to:"LHR"},"319":{from:"LHR",to:"SIN"},"312":{from:"SIN",to:"LGW"},"309":{from:"LGW",to:"SIN"},"318":{from:"SIN",to:"LHR"},"321":{from:"LHR",to:"SIN"},"322":{from:"SIN",to:"LHR"},"317":{from:"LHR",to:"SIN"},"324":{from:"SIN",to:"AMS"},"323":{from:"AMS",to:"SIN"},"326":{from:"SIN",to:"FRA"},"325":{from:"FRA",to:"SIN"},"328":{from:"SIN",to:"MUC"},"327":{from:"MUC",to:"SIN"},"332":{from:"SIN",to:"CDG"},"331":{from:"CDG",to:"SIN"},"336":{from:"SIN",to:"CDG"},"335":{from:"CDG",to:"SIN"},"346":{from:"SIN",to:"ZRH"},"345":{from:"ZRH",to:"SIN"},"352":{from:"SIN",to:"CPH"},"351":{from:"CPH",to:"SIN"},"356":{from:"SIN",to:"MXP"},"355":{from:"MXP",to:"SIN"},"366":{from:"SIN",to:"FCO"},"365":{from:"FCO",to:"SIN"},"378":{from:"SIN",to:"MXP"},"377":{from:"MXP",to:"SIN"},"388":{from:"SIN",to:"BCN"},"387":{from:"BCN",to:"SIN"},"392":{from:"SIN",to:"IST"},"391":{from:"IST",to:"SIN"},"402":{from:"SIN",to:"DEL"},"401":{from:"DEL",to:"SIN"},"406":{from:"SIN",to:"DEL"},"403":{from:"DEL",to:"SIN"},"422":{from:"SIN",to:"BOM"},"421":{from:"BOM",to:"SIN"},"432":{from:"SIN",to:"MLE"},"438":{from:"SIN",to:"MLE"},"446":{from:"SIN",to:"DAC"},"447":{from:"DAC",to:"SIN"},"468":{from:"SIN",to:"CMB"},"469":{from:"CMB",to:"SIN"},"478":{from:"SIN",to:"JNB"},"479":{from:"CPT", to:"JNB"},"479":{from:"JNB",to:"SIN"},"482":{from:"SIN",to:"JNB"},"481":{from:"JNB",to:"SIN"},"494":{from:"SIN",to:"DXB"},"495":{from:"DXB",to:"SIN"},"504":{from:"SIN",to:"AMD"},"505":{from:"AMD",to:"SIN"},"510":{from:"SIN",to:"BLR"},"511":{from:"BLR",to:"SIN"},"522":{from:"SIN",to:"HYD"},"523":{from:"HYD",to:"SIN"},"528":{from:"SIN",to:"MAA"},"529":{from:"MAA",to:"SIN"},"600":{from:"SIN",to:"ICN"},"601":{from:"ICN",to:"SIN"},"606":{from:"SIN",to:"ICN"},"605":{from:"ICN",to:"SIN"},"608":{from:"SIN",to:"ICN"},"607":{from:"ICN",to:"SIN"},"612":{from:"SIN",to:"ICN"},"611":{from:"ICN",to:"SIN"},"618":{from:"SIN",to:"KIX"},"619":{from:"KIX",to:"SIN"},"620":{from:"SIN",to:"KIX"},"621":{from:"KIX",to:"SIN"},"622":{from:"SIN",to:"KIX"},"623":{from:"KIX",to:"SIN"},"632":{from:"SIN",to:"HND"},"633":{from:"HND",to:"SIN"},"634":{from:"SIN",to:"HND"},"635":{from:"HND",to:"SIN"},"636":{from:"SIN",to:"HND"},"631":{from:"HND",to:"SIN"},"638":{from:"SIN",to:"NRT"},"637":{from:"NRT",to:"SIN"},"656":{from:"SIN",to:"FUK"},"655":{from:"FUK",to:"SIN"},"672":{from:"SIN",to:"NGO"},"671":{from:"NGO",to:"SIN"},"706":{from:"SIN",to:"BKK"},"705":{from:"BKK",to:"SIN"},"708":{from:"SIN",to:"BKK"},"707":{from:"BKK",to:"SIN"},"710":{from:"SIN",to:"BKK"},"709":{from:"BKK",to:"SIN"},"712":{from:"SIN",to:"BKK"},"711":{from:"BKK",to:"SIN"},"714":{from:"SIN",to:"BKK"},"713":{from:"BKK",to:"SIN"},"720":{from:"SIN",to:"BKK"},"719":{from:"BKK",to:"SIN"},"800":{from:"SIN",to:"PEK"},"805":{from:"PEK",to:"SIN"},"802":{from:"SIN",to:"PEK"},"807":{from:"PEK",to:"SIN"},"806":{from:"SIN",to:"PEK"},"801":{from:"PEK",to:"SIN"},"810":{from:"SIN",to:"PKX"},"811":{from:"PKX",to:"SIN"},"818":{from:"SIN",to:"CKG"},"819":{from:"CKG",to:"SIN"},"826":{from:"SIN",to:"PVG"},"827":{from:"PVG",to:"SIN"},"828":{from:"SIN",to:"PVG"},"831":{from:"PVG",to:"SIN"},"830":{from:"SIN",to:"PVG"},"833":{from:"PVG",to:"SIN"},"836":{from:"SIN",to:"PVG"},"825":{from:"PVG",to:"SIN"},"842":{from:"SIN",to:"TFU"},"843":{from:"TFU",to:"SIN"},"850":{from:"SIN",to:"CAN"},"851":{from:"CAN",to:"SIN"},"852":{from:"SIN",to:"CAN"},"853":{from:"CAN",to:"SIN"},"856":{from:"SIN",to:"SZX"},"857":{from:"SZX",to:"SIN"},"868":{from:"SIN",to:"XMN"},"869":{from:"XMN",to:"SIN"},"874":{from:"SIN",to:"HKG"},"875":{from:"HKG",to:"SIN"},"876":{from:"SIN",to:"TPE"},"877":{from:"TPE",to:"SIN"},"878":{from:"SIN",to:"TPE"},"879":{from:"TPE",to:"SIN"},"882":{from:"SIN",to:"HKG"},"883":{from:"HKG",to:"SIN"},"892":{from:"SIN",to:"HKG"},"893":{from:"HKG",to:"SIN"},"894":{from:"SIN",to:"HKG"},"895":{from:"HKG",to:"SIN"},"898":{from:"SIN",to:"HKG"},"899":{from:"HKG",to:"SIN"},"910":{from:"SIN",to:"MNL"},"917":{from:"MNL",to:"SIN"},"912":{from:"SIN",to:"MNL"},"919":{from:"MNL",to:"SIN"},"916":{from:"SIN",to:"MNL"},"921":{from:"MNL",to:"SIN"},"918":{from:"SIN",to:"MNL"},"915":{from:"MNL",to:"SIN"},"922":{from:"SIN",to:"SUB"},"923":{from:"SUB",to:"SIN"},"934":{from:"SIN",to:"DPS"},"935":{from:"DPS",to:"SIN"},"936":{from:"SIN",to:"DPS"},"937":{from:"DPS",to:"SIN"},"938":{from:"SIN",to:"DPS"},"939":{from:"DPS",to:"SIN"},"944":{from:"SIN",to:"DPS"},"945":{from:"DPS",to:"SIN"},"950":{from:"SIN",to:"CGK"},"953":{from:"CGK",to:"SIN"},"952":{from:"SIN",to:"CGK"},"955":{from:"CGK",to:"SIN"},"956":{from:"SIN",to:"CGK"},"957":{from:"CGK",to:"SIN"},"958":{from:"SIN",to:"CGK"},"959":{from:"CGK",to:"SIN"},"960":{from:"SIN",to:"CGK"},"961":{from:"CGK",to:"SIN"},"962":{from:"SIN",to:"CGK"},"963":{from:"CGK",to:"SIN"},"964":{from:"SIN",to:"CGK"},"965":{from:"CGK",to:"SIN"},"968":{from:"SIN",to:"CGK"},"951":{from:"CGK",to:"SIN"}};
-    Object.assign(flightNumberRoutes, newRoutes);
-    const aircraftLimits = {
-        MAX: { MZFW: 65.9, MTOW: 82.1, MLW: 69.3, PLW_LIMIT: 68.3, EGT: '753°C' },
-        NG:  { MZFW: 62.7, MTOW: 79.0, MLW: 66.3, PLW_LIMIT: 65.3, EGT: '725°C' }
-    };
-
-    // --- Google API Handlers ---
-    function gapiLoaded() { if (!IS_PREVIEW_MODE) gapi.load('client', initializeGapiClient); }
-    async function initializeGapiClient() {
-        await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
-        gapiInited = true;
-        maybeEnableAuth();
-    }
-    function gisLoaded() { if (!IS_PREVIEW_MODE) {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID, scope: SCOPES,
-            callback: '', 
-        });
-        gisInited = true;
-        maybeEnableAuth();
-    }}
-    function maybeEnableAuth() {
-        if (gapiInited && gisInited) {
-            ui.auth.authButton.onclick = handleAuthClick;
-            ui.auth.signoutButton.onclick = handleSignoutClick;
-        }
-    }
-    function handleAuthClick() {
-        tokenClient.callback = async (resp) => {
-            if (resp.error !== undefined) throw (resp);
-            await appStartup();
-        };
-        if (gapi.client.getToken() === null) tokenClient.requestAccessToken({ prompt: 'consent' });
-        else tokenClient.requestAccessToken({ prompt: '' });
-    }
-    function handleSignoutClick() {
-        const token = gapi.client.getToken();
-        if (token !== null) {
-            google.accounts.oauth2.revoke(token.access_token);
-            gapi.client.setToken('');
-            updateSigninStatus(false);
-            clearInterval(syncInterval);
-        }
-    }
-    function updateSigninStatus(isSignedIn) {
-        if (isSignedIn) {
-            ui.auth.container.style.display = 'none';
-            ui.appWrapper.style.display = 'block';
-            ui.auth.signoutButton.style.display = 'block';
-            ui.auth.status.textContent = 'Syncing...';
-        } else {
-            ui.auth.container.style.display = 'flex';
-            ui.appWrapper.style.display = 'none';
-            ui.auth.signoutButton.style.display = 'none';
-            ui.auth.status.textContent = 'Sign in to sync your flight log.';
-        }
-    }
-
-    // --- App Startup and Data Sync ---
-    async function appStartup() {
-        updateSigninStatus(true);
-        await findOrCreateFile();
-        await loadFile();
-        startPolling();
-    }
-    
-    async function findOrCreateFile() {
-        try {
-            const response = await gapi.client.drive.files.list({
-                q: `name='${FILENAME}' and mimeType='application/json' and trashed=false`,
-                fields: 'files(id, name, modifiedTime)',
-                spaces: 'drive'
-            });
-            if (response.result.files.length > 0) {
-                driveFileId = response.result.files[0].id;
-                lastRemoteUpdate = response.result.files[0].modifiedTime;
-            } else {
-                const createResponse = await gapi.client.drive.files.create({
-                    resource: { name: FILENAME, mimeType: 'application/json', parents: ['root'] },
-                    fields: 'id, modifiedTime'
-                });
-                driveFileId = createResponse.result.id;
-                lastRemoteUpdate = createResponse.result.modifiedTime;
-                 await saveFile(); // Save initial empty data
-            }
-        } catch(e) { console.error("Error finding or creating file:", e); }
-    }
-
-    async function loadFile() {
-        if (!driveFileId) return;
-        ui.auth.status.textContent = 'Loading data...';
-        try {
-            const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
-            flightData = response.result && Object.keys(response.result).length > 0 ? response.result : Array(6).fill(null).map(() => createEmptySector());
-            loadDataForSector(currentSectorIndex);
-            ui.auth.status.textContent = `Sync successful.`;
-        } catch(e) {
-            console.error("Error loading file:", e);
-            flightData = Array(6).fill(null).map(() => createEmptySector());
-            loadDataForSector(currentSectorIndex);
-            ui.auth.status.textContent = `Could not load data. Using local session.`;
-        }
-    }
-    
+    // --- Data Management ---
     function loadFromLocalStorage() {
         const savedData = localStorage.getItem('flightLogData_v3');
         flightData = savedData ? JSON.parse(savedData) : Array(6).fill(null).map(() => createEmptySector());
@@ -682,61 +538,7 @@
     function saveToLocalStorage() {
          localStorage.setItem('flightLogData_v3', JSON.stringify(flightData));
     }
-
-    async function saveFile() {
-        if(IS_PREVIEW_MODE) {
-            saveToLocalStorage();
-            return;
-        }
-        if (!driveFileId || isSaving) return;
-        isSaving = true;
-        ui.auth.status.textContent = 'Saving...';
-        try {
-            const boundary = '-------314159265358979323846';
-            const delimiter = "\r\n--" + boundary + "\r\n";
-            const close_delim = "\r\n--" + boundary + "--";
-            const contentType = 'application/json';
-            const metadata = { name: FILENAME, mimeType: contentType };
-            const base64Data = btoa(JSON.stringify(flightData));
-            const multipartRequestBody =
-                delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(metadata) +
-                delimiter + 'Content-Type: ' + contentType + '\r\n' + 'Content-Transfer-Encoding: base64\r\n' + '\r\n' + base64Data + close_delim;
-
-            const request = await gapi.client.request({
-                path: '/upload/drive/v3/files/' + driveFileId,
-                method: 'PATCH',
-                params: { uploadType: 'multipart' },
-                headers: { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
-                body: multipartRequestBody
-            });
-            
-            lastRemoteUpdate = request.result.modifiedTime;
-            ui.auth.status.textContent = `Saved. Last sync: ${new Date().toLocaleTimeString()}`;
-        } catch(e) {
-            console.error("Error saving file:", e);
-            ui.auth.status.textContent = 'Save failed.';
-        } finally {
-            isSaving = false;
-        }
-    }
     
-    function startPolling() {
-        clearInterval(syncInterval);
-        syncInterval = setInterval(pollForChanges, 30000); 
-    }
-    
-    async function pollForChanges() {
-        if (!driveFileId || isSaving) return;
-        try {
-             const response = await gapi.client.drive.files.get({ fileId: driveFileId, fields: 'modifiedTime' });
-            if (response.result.modifiedTime > lastRemoteUpdate) {
-                lastRemoteUpdate = response.result.modifiedTime;
-                await loadFile();
-                alert("Flight log has been updated from another device.");
-            }
-        } catch(e) { console.error("Polling error:", e); }
-    }
-
     // --- UI and Event Handlers ---
     function initializeEventListeners() {
         Object.keys(ui.inputs).forEach(key => {
@@ -745,7 +547,9 @@
                 el.addEventListener('input', (e) => handleInputChange(key, e.target));
                 el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
                 el.addEventListener('focus', (e) => {
-                    if(key !== 'date') e.target.value = '';
+                    if(!['date', 'cic', 'fo'].includes(key)) {
+                         e.target.value = '';
+                    }
                 });
                 el.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
@@ -767,11 +571,11 @@
         let value = target.value;
         flightData[currentSectorIndex][key] = value;
         
-        if (['from', 'to', 'registration', 'edto', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy'].includes(key)) {
+        if (['from', 'to', 'registration', 'edto', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy', 'afir'].includes(key)) {
             target.value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             flightData[currentSectorIndex][key] = target.value;
         } else if (['cic', 'fo'].includes(key)) {
-             target.value = value.toUpperCase().replace(/[^A-Z0-9\s]/g, '');
+             target.value = value.toUpperCase();
              flightData[currentSectorIndex][key] = target.value;
         }
 
@@ -783,8 +587,8 @@
             case 'registration': if (value.length === 3) target.blur(); break;
             case 'flightNumber': 
             case 'acNextUseFn':
-                if (value.length >= 2 && value.length <= 3) {
-                     if (value.length === 3) target.blur();
+                if (value.length >= 3) {
+                     target.blur();
                 }
                 break;
             case 'from': case 'to': if (value.length === 3) target.blur(); break;
@@ -850,7 +654,7 @@
         } else {
              let formattedValue = value;
             if (target.classList.contains('time-input')) formattedValue = formatters.time(value);
-            else if (['ezfw1', 'ezfw2', 'azfw', 'fuel', 'burn', 'altn', 'thirtyMin', 'cont', 'cg', 'apd', 'fpr2'].includes(key)) {
+            else if (['ezfw1', 'ezfw2', 'azfw', 'fuel', 'burn', 'altn', 'thirtyMin', 'cont', 'cg', 'apd', 'fpr2', 'histBurn', 'histCarriage'].includes(key)) {
                 formattedValue = formatters.decimal(value);
             }
             else if (formatters[key]) formattedValue = formatters[key](value);
@@ -895,7 +699,7 @@
 
     function saveAndRecalculate() {
         updateAllCalculations();
-        saveFile();
+        saveToLocalStorage();
     }
     
     function loadDataForSector(sectorIndex) {
@@ -1298,7 +1102,8 @@
             crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '',
             bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '',
             optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '',
-            acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', conseqAvailStrikethrough: false
+            acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', conseqAvailStrikethrough: false,
+            histBurn: '', histCarriage: '', afir: ''
         };
     }
 
