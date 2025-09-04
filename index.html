@@ -27,6 +27,30 @@
             -webkit-text-size-adjust: none;
         }
 
+        #login-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        #login-btn {
+            background-color: var(--focus-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        #main-app {
+            display: none; /* Hidden by default */
+        }
+
         #app-container {
             padding: 10px 10px 80px 10px;
             display: flex;
@@ -257,6 +281,7 @@
             font-size: 14px; font-weight: 600; cursor: pointer;
         }
         #toolbar button.active { background-color: var(--focus-color); color: white; }
+        #sign-out-btn { background-color: var(--red-color); }
 
         /* AFIR Modal Styles */
         #afir-modal {
@@ -305,7 +330,14 @@
     </style>
 </head>
 <body>
-    <div id="app-wrapper">
+
+    <div id="login-container">
+        <h1>Flight Log</h1>
+        <p>Please sign in to continue</p>
+        <button id="login-btn">Sign in with Google</button>
+    </div>
+
+    <div id="main-app">
         <div id="user-id-display">Connecting...</div>
         <div id="app-container">
             <!-- SECTION 1: FLIGHT DATA -->
@@ -348,7 +380,7 @@
                     </div>
                     <div class="field-group">
                         <label for="report">RPT</label>
-                        <input type="text" id="report" class="field-value time-input" inputmode="numeric">
+                        <input type="text" id="report" class="field-value" time-input" inputmode="numeric">
                     </div>
                     <div class="field-group">
                         <label for="depGate">DEP GATE</label>
@@ -507,6 +539,7 @@
             <div class="action-buttons">
                 <button id="clear-sector-btn">CLEAR SECTOR</button>
                 <button id="clear-all-btn">CLEAR ALL</button>
+                <button id="sign-out-btn">Sign Out</button>
             </div>
         </div>
 
@@ -524,7 +557,7 @@
     <script type="module">
         // --- Firebase Imports ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Global Scope Variables ---
@@ -567,7 +600,9 @@
                     },
                     buttons: {
                         crzTempToggle: document.getElementById('crzTempToggle'),
-                        saveAfirBtn: document.getElementById('save-afir-btn')
+                        saveAfirBtn: document.getElementById('save-afir-btn'),
+                        loginBtn: document.getElementById('login-btn'),
+                        signOutBtn: document.getElementById('sign-out-btn')
                     },
                     labels: { 
                         date: document.getElementById('date-label'),
@@ -582,6 +617,8 @@
                         plw: document.getElementById('plw'), mlw: document.getElementById('mlw'), egt: document.getElementById('egt'), tankerDelta: document.getElementById('tankerDelta'), acNextUseRoute: document.getElementById('acNextUseRoute'), gndTimeForAc: document.getElementById('gndTimeForAc')
                     },
                     containers: {
+                        loginContainer: document.getElementById('login-container'),
+                        mainApp: document.getElementById('main-app'),
                         turnaroundSection: document.getElementById('turnaround-section'),
                         myNextFltCompoundGroup: document.getElementById('myNextFlt-compound-group'),
                         acNextUseCompoundGroup: document.getElementById('acNextUse-compound-group'),
@@ -598,49 +635,57 @@
                         container: document.getElementById('delay-codes-container'),
                         quickRefContainer: document.getElementById('quick-ref-delays-container')
                     },
-                    appWrapper: document.getElementById('app-wrapper'),
                     userIdDisplay: document.getElementById('user-id-display'),
                     afirModal: document.getElementById('afir-modal'),
                     afirTextarea: document.getElementById('afir-textarea'),
                 };
                 
-                document.getElementById('app-wrapper').style.display = 'block';
+                const firebaseConfig = {
+                    apiKey: "AIzaSyD56g-MYRr6em682dDNA9ahAtdo-JLugfI",
+                    authDomain: "flight-log-3aa33.firebaseapp.com",
+                    projectId: "flight-log-3aa33",
+                    storageBucket: "flight-log-3aa33.appspot.com",
+                    messagingSenderId: "160744126033",
+                    appId: "1:160744126033:web:ec744ad18373aeed496a70"
+                };
 
                 try {
-                    const firebaseConfig = typeof __firebase_config !== 'undefined'
-                        ? JSON.parse(__firebase_config)
-                        : { apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: "" };
-
                     app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
 
                     initializeEventListeners();
-
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    
+                    await setPersistence(auth, browserLocalPersistence);
 
                     onAuthStateChanged(auth, user => {
                         if (user) {
                             userId = user.uid;
-                            ui.userIdDisplay.textContent = `User ID: ${userId}`;
-                            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                            flightLogDocRef = doc(db, 'artifacts', appId, 'users', userId, 'flightLog', 'data');
+                            ui.containers.loginContainer.style.display = 'none';
+                            ui.containers.mainApp.style.display = 'block';
+                            ui.userIdDisplay.textContent = user.displayName || user.email;
+                            
+                            flightLogDocRef = doc(db, 'flightlogs', userId);
                             attachFirestoreListener();
                         } else {
-                            ui.userIdDisplay.textContent = 'Not Signed In';
+                            ui.containers.loginContainer.style.display = 'flex';
+                            ui.containers.mainApp.style.display = 'none';
+                            if (unsubscribe) unsubscribe();
                         }
                     });
 
                 } catch (error) {
-                    console.error("Initialization or Auth failed:", error);
-                    if (ui && ui.userIdDisplay) {
-                        ui.userIdDisplay.textContent = 'Error';
-                    }
+                    console.error("Firebase Initialization Failed:", error);
+                    alert("Could not connect to the database. Please check your Firebase configuration.");
                 }
+            });
+        }
+        
+        function signInWithGoogle() {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => {
+                console.error("Google Sign-In Failed:", error);
+                alert("Could not sign in with Google. Please check the console for errors.");
             });
         }
 
@@ -654,7 +699,6 @@
                     flightData = data.sectors;
                     currentSectorIndex = data.currentSectorIndex || 0;
                 } else {
-                    // No document yet, create one
                     flightData = Array(6).fill(null).map(() => createEmptySector());
                     setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: 0 });
                 }
@@ -671,11 +715,10 @@
             }
         }
     
-        // --- UI and Event Handlers ---
         function initializeEventListeners() {
             Object.keys(ui.inputs).forEach(key => {
                 const el = ui.inputs[key];
-                if (el && key !== 'afir') { // AFIR has its own handler
+                if (el && key !== 'afir') {
                     el.addEventListener('input', (e) => handleInputChange(key, e.target));
                     el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
                     el.addEventListener('focus', (e) => {
@@ -697,12 +740,12 @@
             ui.toolbar.sectorButtons.forEach(btn => btn.addEventListener('click', () => switchSector(parseInt(btn.dataset.sector, 10))));
             ui.toolbar.clearSectorBtn.addEventListener('click', clearCurrentSector);
             ui.toolbar.clearAllBtn.addEventListener('click', clearAllSectors);
-
-            // AFIR Modal Listeners
+            ui.buttons.loginBtn.addEventListener('click', signInWithGoogle);
+            ui.buttons.signOutBtn.addEventListener('click', () => signOut(auth));
             ui.inputs.afir.addEventListener('click', openAfirModal);
             ui.buttons.saveAfirBtn.addEventListener('click', saveAndCloseAfirModal);
             ui.afirModal.addEventListener('click', (e) => {
-                if (e.target === ui.afirModal) { // Close if clicking on the background
+                if (e.target === ui.afirModal) {
                     ui.afirModal.style.display = 'none';
                 }
             });
@@ -748,7 +791,7 @@
             let value = target.value;
             const data = flightData[currentSectorIndex];
             
-            target.style.fontSize = ''; // Reset font size on blur for CIC/FO
+            target.style.fontSize = '';
 
             const formatters = {
                 registration: v => v.length === 3 ? `9V-${v}` : v,
@@ -808,13 +851,13 @@
             
             if (key === 'registration') {
                 const formattedReg = data[key];
-                if (currentSectorIndex === 0) { // Sector 1 entry
+                if (currentSectorIndex === 0) {
                     if(flightData[1]) flightData[1].registration = formattedReg;
                     if(flightData[2]) flightData[2].registration = formattedReg;
                     if(flightData[3]) flightData[3].registration = formattedReg;
-                } else if (currentSectorIndex === 2) { // Sector 3 entry
+                } else if (currentSectorIndex === 2) {
                     if(flightData[3]) flightData[3].registration = formattedReg;
-                } else if (currentSectorIndex === 4) { // Sector 5 entry
+                } else if (currentSectorIndex === 4) {
                     if(flightData[5]) flightData[5].registration = formattedReg;
                 }
             }
@@ -916,7 +959,7 @@
         
         function switchSector(sectorIndex) {
             currentSectorIndex = sectorIndex;
-            saveToFirestore(); // Save current sector index
+            saveToFirestore();
             loadDataForSector(currentSectorIndex);
         }
 
@@ -949,7 +992,6 @@
                 }
             });
             
-            // Flight Planning Calcs
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : { MZFW: '-', MTOW: '-', MLW: '-', PLW_LIMIT: Infinity, EGT: '-' };
             ui.calculated.mzfw.textContent = limits.MZFW;
@@ -985,12 +1027,11 @@
             const tankerDelta = (fpr2 + 0.6 + burn);
             ui.calculated.tankerDelta.textContent = tankerDelta > 0.6 ? tankerDelta.toFixed(1) : '';
 
-            // Turnaround Calcs
             if (currentSectorIndex < 5 && flightData[currentSectorIndex + 1]) {
                 const nextSectorData = flightData[currentSectorIndex + 1];
                 let groundTimeMins = calculateTimeDifference(data.sta, nextSectorData.std);
                 
-                if (groundTimeMins !== null && (currentSectorIndex === 1 || currentSectorIndex === 3)) { // Sectors 2 and 4
+                if (groundTimeMins !== null && (currentSectorIndex === 1 || currentSectorIndex === 3)) {
                     groundTimeMins -= 60;
                 }
 
@@ -1035,7 +1076,6 @@
             ui.labels.conseqAvailLabel.classList.toggle('strikethrough', data.conseqAvailStrikethrough);
             ui.calculated.conseqAvail.classList.toggle('strikethrough', data.conseqAvailStrikethrough);
 
-            // Timings Calcs
             const tod = calculateTimeDifference(data.taxi, data.off), tid = calculateTimeDifference(data.on, data.in), aft = calculateTimeDifference(data.off, data.on), abt = calculateTimeDifference(data.out, data.in), ddd = calculateDelay(data.std, data.out), aaa = calculateDelay(data.sta, data.in), blk = calculateTimeDifference(data.std, data.sta), eftMins = timeToMinutes(data.eft);
             if (blk !== null) ui.calculated.blk.textContent = minutesToHHMM(blk);
             if (tod !== null) ui.calculated.tod.textContent = `TAXI-OUT: ${minutesToHHMM(tod)}`;
@@ -1112,8 +1152,8 @@
         function calculateDelay(startStr, endStr) {
             let startMins = timeToMinutes(startStr), endMins = timeToMinutes(endStr);
             if (startMins === null || endMins === null) return null;
-            if (Math.abs(endMins - startMins) > 720) { // 12 hours
-                if (endMins < startMins) endMins += 1440; // 24 hours
+            if (Math.abs(endMins - startMins) > 720) {
+                if (endMins < startMins) endMins += 1440;
                 else startMins += 1440;
             }
             return endMins - startMins;
@@ -1184,7 +1224,7 @@
             const newSign = currentSign === 'M' ? 'P' : 'M';
             ui.buttons.crzTempToggle.textContent = newSign;
             flightData[currentSectorIndex].crzTempSign = newSign;
-            handleInputBlur('crzTemp', ui.inputs.crzTemp); // Re-format on toggle
+            handleInputBlur('crzTemp', ui.inputs.crzTemp);
         }
         function toggleConseqAvail() {
             if (!flightData) return;
@@ -1248,12 +1288,10 @@
         }
          function renderQuickReferenceDelays() {
             const quickRefContainer = ui.delay.quickRefContainer;
-            quickRefContainer.innerHTML = ''; // Clear previous
+            quickRefContainer.innerHTML = '';
             
             const quickRefCodes = ['105', '110', '113', '331', '332', '333', 'PN', 'PU', 'GL'];
             const allCodes = {};
-
-            // Flatten the delay codes for easier lookup
             for (const category in delayCodes) {
                 for (const subCat in delayCodes[category]) {
                     for (const code in delayCodes[category][subCat]) {
@@ -1285,7 +1323,6 @@
             };
         }
 
-        // AFIR Modal Functions
         function openAfirModal() {
             if (!flightData) return;
             ui.afirTextarea.value = flightData[currentSectorIndex].afir || '';
@@ -1308,7 +1345,6 @@
             return text.substring(0, length) + '...';
         }
 
-        // --- Start the App ---
         runAppLogic();
 
     </script>
