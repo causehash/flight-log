@@ -110,16 +110,26 @@
         /* --- Section 1: Flight Data --- */
         .flight-data-section-content {
             display: flex;
+            flex-direction: column;
             width: 100%;
             gap: 5px;
-            flex-wrap: wrap; 
+        }
+        .flight-data-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            gap: 5px;
         }
         .flight-data-section-content .field-group {
-            flex: 1 1 auto;
+            flex: 1 1 0;
+            min-width: 50px;
         }
         .flight-data-section-content label {
-            font-size: clamp(8px, 1.8vw, 10px);
+            font-size: clamp(8px, 2.2vw, 10px);
             white-space: nowrap;
+        }
+        .flight-data-section-content .field-value {
+             font-size: clamp(12px, 3vw, 16px);
         }
         .input-with-tz {
             position: relative; width: 100%;
@@ -152,6 +162,25 @@
             width: 100%;
             gap: 8px;
         }
+        .timings-turnaround-row .field-group {
+            min-width: 60px;
+        }
+        .timings-turnaround-row label {
+            font-size: 10px;
+        }
+        .timings-turnaround-row .calculated,
+        .timings-turnaround-row .field-value {
+            font-size: 12px;
+            font-weight: normal;
+        }
+        #myNextFlt-group .calculated {
+            display: flex;
+            flex-direction: column;
+        }
+         #acNextUse-group .calculated {
+            font-size: 10px;
+            min-height: 1em;
+        }
 
         /* --- Section 3: Flight Planning --- */
         .flight-planning-section {
@@ -168,17 +197,22 @@
             align-items: center; justify-content: center;
             font-size: 12px; font-weight: normal; width: 100%;
         }
-        #reserves-group.bordered {
+        #reserves-group.bordered, .fuel-bordered {
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 2px;
         }
-        .limit-exceeded { color: var(--red-color); }
+        .limit-exceeded { color: var(--red-color) !important; }
         .limit-exceeded-box { border: 1px solid var(--red-color); border-radius: 8px; padding: 2px; }
         .temp-toggle {
             height: 28px; width: 28px; font-size: 12px;
             background-color: transparent; border: none;
             color: var(--text-color); border-radius: 4px; margin-right: 4px;
+        }
+        .horizontal-limits {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
         }
 
         /* --- Toolbar & Modals --- */
@@ -245,15 +279,19 @@
             <section class="data-section">
                 <h2 class="section-title">FLIGHT DATA</h2>
                 <div class="flight-data-section-content">
-                    <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
-                    <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder="" onfocus="(this.type='date')" onblur="(this.type='text')"></div>
-                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" placeholder="UTC"></div></div>
-                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" placeholder="UTC"></div></div>
-                    <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
-                    <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
-                    <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
-                    <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
-                    <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
+                    <div class="flight-data-row">
+                        <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
+                        <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder="" onfocus="(this.type='date')" onblur="(this.type='text')"></div>
+                        <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" placeholder="UTC"></div></div>
+                        <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" placeholder="UTC"></div></div>
+                    </div>
+                    <div class="flight-data-row">
+                        <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
+                        <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
+                        <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
+                        <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
+                        <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
+                    </div>
                 </div>
             </section>
 
@@ -294,10 +332,10 @@
                 <div class="timings-turnaround-row">
                     <div id="myNextFlt-group" class="field-group"><label>MY NEXT FLT</label><div id="myNextFlt" class="calculated"></div></div>
                     <div id="gndTimeAvail-group" class="field-group"><label>TIME AVAIL TO NXT FLT</label><div id="gndTimeAvail" class="calculated"></div></div>
-                    <div id="eta-group" class="field-group"><label for="eta">ETA</label><input type="text" id="eta" class="field-value time-input" inputmode="numeric"></div>
-                    <div id="acNextUse-group" class="field-group"><label>A/C NEXT USE</label><input type="text" id="acNextUseFn" class="field-value" inputmode="numeric"><div id="acNextUseRoute" class="calculated"></div></div>
-                    <div class="field-group"><label>A/C STD</label><input type="text" id="acNextUseStd" class="field-value time-input" inputmode="numeric"></div>
-                    <div class="field-group"><label>GND TIME FOR A/C</label><div id="gndTimeForAc" class="calculated"></div></div>
+                    <div id="eta-group" class="field-group"><label for="eta">ETA</label><input type="text" id="eta" class="field-value time-input"></div>
+                    <div id="acNextUse-group" class="field-group"><label>A/C NEXT USE</label><input type="text" id="acNextUseFn" class="field-value"><div id="acNextUseRoute" class="calculated"></div></div>
+                    <div class="field-group"><label>A/C STD</label><input type="text" id="acNextUseStd" class="field-value time-input"></div>
+                    <div class="field-group"><label>A/C GND TIME</label><div id="gndTimeForAc" class="calculated"></div></div>
                     <div class="field-group"><label for="arrGate">ARR GATE</label><input type="text" id="arrGate" class="field-value"></div>
                 </div>
             </section>
@@ -307,32 +345,35 @@
                 <h2 class="section-title">FLIGHT PLANNING</h2>
                 <div class="field-group"><label for="ezfw1">EZFW 1</label><input type="text" id="ezfw1" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="ezfw2">EZFW 2</label><input type="text" id="ezfw2" class="field-value" inputmode="decimal"><div id="ezfwDelta" class="sub-field-value"></div></div>
-                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div><div id="mzfw" class="sub-field-value secondary"></div></div>
-                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div><div id="mtow" class="sub-field-value secondary"></div></div>
-                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div><div id="mlw" class="sub-field-value secondary"></div></div>
+                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="decimal"></div>
+                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div></div>
+                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div></div>
+                <div class="field-group" style="grid-column: span 3;"><div class="horizontal-limits"><div id="mzfw" class="sub-field-value secondary"></div><div id="mtow" class="sub-field-value secondary"></div><div id="mlw" class="sub-field-value secondary"></div></div></div>
+
                 <div class="field-group"><label for="sid">SID</label><input type="text" id="sid" class="field-value"></div>
                 <div class="field-group"><label for="app">APP</label><select id="app" class="field-value"><option>ILS</option><option>RNP</option><option>VOR</option></select></div>
                 <div class="field-group"><label for="rwy">RWY</label><input type="text" id="rwy" class="field-value" inputmode="text" maxlength="3"></div>
                 <div class="field-group"><label for="trans">TRANS</label><input type="text" id="trans" class="field-value"></div>
                 <div class="field-group"><label for="star">STAR</label><input type="text" id="star" class="field-value"></div>
                 <div class="field-group"><label for="elev">ARR ELEV</label><input type="text" id="elev" class="field-value" inputmode="numeric" maxlength="3"></div>
+                
                 <div class="field-group"><label for="burn">BURN</label><input type="text" id="burn" class="field-value" inputmode="decimal"></div>
-                <div class="field-group"><label for="fuel">FUEL</label><input type="text" id="fuel" class="field-value" inputmode="decimal"></div>
+                <div class="field-group fuel-bordered"><label for="fuel">FUEL</label><input type="text" id="fuel" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="cont">CONT</label><input type="text" id="cont" class="field-value" inputmode="numeric" maxlength="1"></div>
                 <div class="field-group"><label for="altn">ALTN</label><input type="text" id="altn" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="thirtyMin">30 MIN</label><input type="text" id="thirtyMin" class="field-value" inputmode="decimal"></div>
-                <div id="reserves-group" class="field-group" style="grid-column: span 2;"><label>RESERVES</label><div id="reserves" class="calculated prominent"></div></div>
+                <div id="reserves-group" class="field-group"><label>RESERVES</label><div id="reserves" class="calculated prominent"></div></div>
 
                 <div class="field-group"><label for="crew">CREW</label><input type="text" id="crew" class="field-value" inputmode="numeric" maxlength="1"></div>
                 <div class="field-group"><label for="pax">PAX</label><input type="text" id="pax" class="field-value" inputmode="numeric" maxlength="3"></div>
                 <div class="field-group"><label>POB</label><div id="pob" class="calculated"></div></div>
                 <div class="field-group"><label for="bw">BW</label><input type="text" id="bw" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="bi">BI</label><input type="text" id="bi" class="field-value" inputmode="numeric" maxlength="3"></div>
-                <div class="field-group"><label for="cg">CG</label><input type="text" id="cg" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="apd">APD</label><input type="text" id="apd" class="field-value" inputmode="numeric" maxlength="2"></div>
                 <div class="field-group"><label>EGT</label><div id="egt" class="calculated"></div></div>
                 <div class="field-group"><label for="fpr2">2ND SECTOR FPR</label><input type="text" id="fpr2" class="field-value" inputmode="decimal"></div>
-                <div class="field-group"><label>TANKER DELTA</label><div id="tankerDelta" class="calculated"></div></div>
+                <div class="field-group" id="tanker-delta-group"><label>TANKER DELTA</label><div id="tankerDelta" class="calculated"></div></div>
                 <div class="field-group"><label for="turb">TURB</label><input type="text" id="turb" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="terr">TERR</label><input type="text" id="terr" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="flightLevels">Flight Levels</label><input type="text" id="flightLevels" class="field-value" inputmode="numeric"></div>
@@ -360,7 +401,7 @@
             <!-- SECTION 4: DELAY ATTRIBUTION -->
             <section class="data-section">
                 <h2 class="section-title">DELAY ATTRIBUTION</h2>
-                 <div id="quick-ref-container">
+                 <div id="quick-ref-container" style="display: none;">
                     <h3 id="quick-ref-title">QUICK REFERENCE DELAYS</h3>
                     <div id="quick-ref-delays-container"></div>
                 </div>
@@ -404,8 +445,8 @@
         const newRoutes = {"12":{from:"SIN", to:"NRT"},"12":{from:"NRT",to:"LAX"},"11":{from:"LAX", to:"NRT"},"11":{from:"NRT",to:"SIN"},"22":{from:"SIN",to:"EWR"},"21":{from:"EWR",to:"SIN"},"24":{from:"SIN",to:"JFK"},"23":{from:"JFK",to:"SIN"},"26":{from:"SIN", to:"FRA"},"26":{from:"FRA",to:"JFK"},"25":{from:"JFK", to:"FRA"}, "25":{from:"FRA",to:"SIN"},"28":{from:"SIN",to:"SEA"},"27":{from:"SEA",to:"SIN"},"32":{from:"SIN",to:"SFO"},"31":{from:"SFO",to:"SIN"},"34":{from:"SIN",to:"SFO"},"33":{from:"SFO",to:"SIN"},"36":{from:"SIN",to:"LAX"},"35":{from:"LAX",to:"SIN"},"38":{from:"SIN",to:"LAX"},"37":{from:"LAX",to:"SIN"},"52":{from:"SIN",to:"MAN"},"51":{from:"IAH", to:"MAN"}, "51":{from:"MAN",to:"SIN"},"106":{from:"SIN",to:"KUL"},"105":{from:"KUL",to:"SIN"},"108":{from:"SIN",to:"KUL"},"107":{from:"KUL",to:"SIN"},"122":{from:"SIN",to:"KUL"},"121":{from:"KUL",to:"SIN"},"126":{from:"SIN",to:"KUL"},"125":{from:"KUL",to:"SIN"},"154":{from:"SIN", to:"PNH"},"153":{from:"PNH",to:"SIN"}, "156":{from:"SIN", to:"PNH"}, "155":{from:"PNH",to:"SIN"}, "158":{from:"SIN", to:"PNH"}, "157":{from:"PNH",to:"SIN"},"178":{from:"SIN",to:"SGN"},"177":{from:"SGN",to:"SIN"},"184":{from:"SIN",to:"SGN"},"183":{from:"SGN",to:"SIN"},"186":{from:"SIN",to:"SGN"},"185":{from:"SGN",to:"SIN"},"192":{from:"SIN",to:"HAN"},"191":{from:"HAN",to:"SIN"},"203":{from:"SIN",to:"CNS"},"204":{from:"CNS",to:"SIN"},"207":{from:"SIN",to:"MEL"},"208":{from:"MEL",to:"SIN"},"211":{from:"SIN",to:"SYD"},"212":{from:"SYD",to:"SIN"},"213":{from:"SIN",to:"PER"},"214":{from:"PER",to:"SIN"},"215":{from:"SIN",to:"PER"},"216":{from:"PER",to:"SIN"},"217":{from:"SIN",to:"MEL"},"218":{from:"MEL",to:"SIN"},"220":{from:"MEL",to:"SIN"},"221":{from:"SIN",to:"SYD"},"232":{from:"SYD",to:"SIN"},"223":{from:"SIN",to:"PER"},"225":{from:"SIN",to:"PER"},"224":{from:"PER",to:"SIN"},"227":{from:"SIN",to:"MEL"},"238":{from:"MEL",to:"SIN"},"231":{from:"SIN",to:"SYD"},"222":{from:"SYD",to:"SIN"},"235":{from:"SIN",to:"BNE"},"256":{from:"BNE",to:"SIN"},"237":{from:"SIN",to:"MEL"},"228":{from:"MEL",to:"SIN"},"241":{from:"SIN",to:"SYD"},"242":{from:"SYD",to:"SIN"},"245":{from:"SIN",to:"BNE"},"246":{from:"BNE",to:"SIN"},"247":{from:"SIN",to:"MEL"},"248":{from:"MEL",to:"SIN"},"255":{from:"SIN",to:"BNE"},"236":{from:"BNE",to:"SIN"},"265":{from:"SIN",to:"BNE"},"266":{from:"BNE",to:"SIN"},"277":{from:"SIN",to:"ADL"},"276":{from:"ADL",to:"SIN"},"279":{from:"SIN",to:"ADL"},"278":{from:"ADL",to:"SIN"},"285":{from:"SIN",to:"AKL"},"286":{from:"AKL",to:"SIN"},"297":{from:"SIN",to:"CHC"},"298":{from:"CHC",to:"SIN"},"302":{from:"SIN",to:"MAN"},"301":{from:"MAN",to:"SIN"},"304":{from:"SIN",to:"BRU"},"303":{from:"BRU",to:"SIN"},"306":{from:"SIN",to:"LHR"},"305":{from:"LHR",to:"SIN"},"308":{from:"SIN",to:"LHR"},"319":{from:"LHR",to:"SIN"},"312":{from:"SIN",to:"LGW"},"309":{from:"LGW",to:"SIN"},"318":{from:"SIN",to:"LHR"},"321":{from:"LHR",to:"SIN"},"322":{from:"SIN",to:"LHR"},"317":{from:"LHR",to:"SIN"},"324":{from:"SIN",to:"AMS"},"323":{from:"AMS",to:"SIN"},"326":{from:"SIN",to:"FRA"},"325":{from:"FRA",to:"SIN"},"328":{from:"SIN",to:"MUC"},"327":{from:"MUC",to:"SIN"},"332":{from:"SIN",to:"CDG"},"331":{from:"CDG",to:"SIN"},"336":{from:"SIN",to:"CDG"},"335":{from:"CDG",to:"SIN"},"346":{from:"SIN",to:"ZRH"},"345":{from:"ZRH",to:"SIN"},"352":{from:"SIN",to:"CPH"},"351":{from:"CPH",to:"SIN"},"356":{from:"SIN",to:"MXP"},"355":{from:"MXP",to:"SIN"},"366":{from:"SIN",to:"FCO"},"365":{from:"FCO",to:"SIN"},"378":{from:"SIN",to:"MXP"},"377":{from:"MXP",to:"SIN"},"388":{from:"SIN",to:"BCN"},"387":{from:"BCN",to:"SIN"},"392":{from:"SIN",to:"IST"},"391":{from:"IST",to:"SIN"},"402":{from:"SIN",to:"DEL"},"401":{from:"DEL",to:"SIN"},"406":{from:"SIN",to:"DEL"},"403":{from:"DEL",to:"SIN"},"422":{from:"SIN",to:"BOM"},"421":{from:"BOM",to:"SIN"},"432":{from:"SIN",to:"MLE"},"438":{from:"SIN",to:"MLE"},"446":{from:"SIN",to:"DAC"},"447":{from:"DAC",to:"SIN"},"468":{from:"SIN",to:"CMB"},"469":{from:"CMB",to:"SIN"},"478":{from:"SIN",to:"JNB"},"479":{from:"CPT", to:"JNB"},"479":{from:"JNB",to:"SIN"},"482":{from:"SIN",to:"JNB"},"481":{from:"JNB",to:"SIN"},"494":{from:"SIN",to:"DXB"},"495":{from:"DXB",to:"SIN"},"504":{from:"SIN",to:"AMD"},"505":{from:"AMD",to:"SIN"},"510":{from:"SIN",to:"BLR"},"511":{from:"BLR",to:"SIN"},"522":{from:"SIN",to:"HYD"},"523":{from:"HYD",to:"SIN"},"528":{from:"SIN",to:"MAA"},"529":{from:"MAA",to:"SIN"},"600":{from:"SIN",to:"ICN"},"601":{from:"ICN",to:"SIN"},"606":{from:"SIN",to:"ICN"},"605":{from:"ICN",to:"SIN"},"608":{from:"SIN",to:"ICN"},"607":{from:"ICN",to:"SIN"},"612":{from:"SIN",to:"ICN"},"611":{from:"ICN",to:"SIN"},"618":{from:"SIN",to:"KIX"},"619":{from:"KIX",to:"SIN"},"620":{from:"SIN",to:"KIX"},"621":{from:"KIX",to:"SIN"},"622":{from:"SIN",to:"KIX"},"623":{from:"KIX",to:"SIN"},"632":{from:"SIN",to:"HND"},"633":{from:"HND",to:"SIN"},"634":{from:"SIN",to:"HND"},"635":{from:"HND",to:"SIN"},"636":{from:"SIN",to:"HND"},"631":{from:"HND",to:"SIN"},"638":{from:"SIN",to:"NRT"},"637":{from:"NRT",to:"SIN"},"656":{from:"SIN",to:"FUK"},"655":{from:"FUK",to:"SIN"},"672":{from:"SIN",to:"NGO"},"671":{from:"NGO",to:"SIN"},"706":{from:"SIN",to:"BKK"},"705":{from:"BKK",to:"SIN"},"708":{from:"SIN",to:"BKK"},"707":{from:"BKK",to:"SIN"},"710":{from:"SIN",to:"BKK"},"709":{from:"BKK",to:"SIN"},"712":{from:"SIN",to:"BKK"},"711":{from:"BKK",to:"SIN"},"714":{from:"SIN",to:"BKK"},"713":{from:"BKK",to:"SIN"},"720":{from:"SIN",to:"BKK"},"719":{from:"BKK",to:"SIN"},"800":{from:"SIN",to:"PEK"},"805":{from:"PEK",to:"SIN"},"802":{from:"SIN",to:"PEK"},"807":{from:"PEK",to:"SIN"},"806":{from:"SIN",to:"PEK"},"801":{from:"PEK",to:"SIN"},"810":{from:"SIN",to:"PKX"},"811":{from:"PKX",to:"SIN"},"818":{from:"SIN",to:"CKG"},"819":{from:"CKG",to:"SIN"},"826":{from:"SIN",to:"PVG"},"827":{from:"PVG",to:"SIN"},"828":{from:"SIN",to:"PVG"},"831":{from:"PVG",to:"SIN"},"830":{from:"SIN",to:"PVG"},"833":{from:"PVG",to:"SIN"},"836":{from:"SIN",to:"PVG"},"825":{from:"PVG",to:"SIN"},"842":{from:"SIN",to:"TFU"},"843":{from:"TFU",to:"SIN"},"850":{from:"SIN",to:"CAN"},"851":{from:"CAN",to:"SIN"},"852":{from:"SIN",to:"CAN"},"853":{from:"CAN",to:"SIN"},"856":{from:"SIN",to:"SZX"},"857":{from:"SZX",to:"SIN"},"868":{from:"SIN",to:"XMN"},"869":{from:"XMN",to:"SIN"},"874":{from:"SIN",to:"HKG"},"875":{from:"HKG",to:"SIN"},"876":{from:"SIN",to:"TPE"},"877":{from:"TPE",to:"SIN"},"878":{from:"SIN",to:"TPE"},"879":{from:"TPE",to:"SIN"},"882":{from:"SIN",to:"HKG"},"883":{from:"HKG",to:"SIN"},"892":{from:"SIN",to:"HKG"},"893":{from:"HKG",to:"SIN"},"894":{from:"SIN",to:"HKG"},"895":{from:"HKG",to:"SIN"},"898":{from:"SIN",to:"HKG"},"899":{from:"HKG",to:"SIN"},"910":{from:"SIN",to:"MNL"},"917":{from:"MNL",to:"SIN"},"912":{from:"SIN",to:"MNL"},"919":{from:"MNL",to:"SIN"},"916":{from:"SIN",to:"MNL"},"921":{from:"MNL",to:"SIN"},"918":{from:"SIN",to:"MNL"},"915":{from:"MNL",to:"SIN"},"922":{from:"SIN",to:"SUB"},"923":{from:"SUB",to:"SIN"},"934":{from:"SIN",to:"DPS"},"935":{from:"DPS",to:"SIN"},"936":{from:"SIN",to:"DPS"},"937":{from:"DPS",to:"SIN"},"938":{from:"SIN",to:"DPS"},"939":{from:"DPS",to:"SIN"},"944":{from:"SIN",to:"DPS"},"945":{from:"DPS",to:"SIN"},"950":{from:"SIN",to:"CGK"},"953":{from:"CGK",to:"SIN"},"952":{from:"SIN",to:"CGK"},"955":{from:"CGK",to:"SIN"},"956":{from:"SIN",to:"CGK"},"957":{from:"CGK",to:"SIN"},"958":{from:"SIN",to:"CGK"},"959":{from:"CGK",to:"SIN"},"960":{from:"SIN",to:"CGK"},"961":{from:"CGK",to:"SIN"},"962":{from:"SIN",to:"CGK"},"963":{from:"CGK",to:"SIN"},"964":{from:"SIN",to:"CGK"},"965":{from:"CGK",to:"SIN"},"968":{from:"SIN",to:"CGK"},"951":{from:"CGK",to:"SIN"}};
         Object.assign(flightNumberRoutes, newRoutes);
         const aircraftLimits = {
-            MAX: { MZFW: 65.9, MTOW: 82.1, MLW: 69.3, PLW: 68.3 },
-            NG:  { MZFW: 62.7, MTOW: 79.0, MLW: 66.3, PLW: 65.3 }
+            MAX: { MZFW: 65.9, MTOW: 82.1, MLW: 69.3, PLW: 68.3, EGT: '753°C' },
+            NG:  { MZFW: 62.7, MTOW: 79.0, MLW: 66.3, PLW: 65.3, EGT: '725°C' }
         };
     
         function runAppLogic() {
@@ -449,7 +490,9 @@
                         loginContainer: document.getElementById('login-container'), mainApp: document.getElementById('main-app'),
                         myNextFltCompoundGroup: document.getElementById('myNextFlt-compound-group'), acNextUseCompoundGroup: document.getElementById('acNextUse-compound-group'),
                         etaGroup: document.getElementById('eta-group'), conseqAvailGroup: document.getElementById('conseq-avail-group'),
-                        subRowSpacer: document.getElementById('sub-row-spacer'), reservesGroup: document.getElementById('reserves-group')
+                        subRowSpacer: document.getElementById('sub-row-spacer'), reservesGroup: document.getElementById('reserves-group'),
+                        fuelGroup: document.querySelector('#fuel').parentElement,
+                        tankerDeltaGroup: document.getElementById('tanker-delta-group')
                     },
                     toolbar: { sectorButtons: document.querySelectorAll('.sector-btn'), clearSectorBtn: document.getElementById('clear-sector-btn'), clearAllBtn: document.getElementById('clear-all-btn') },
                     delay: { container: document.getElementById('delay-codes-container'), quickRefContainer: document.getElementById('quick-ref-delays-container') },
@@ -512,11 +555,13 @@
                     setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: 0 });
                 }
                 loadDataForSector(currentSectorIndex);
+            }, (error) => {
+                 console.error("Firestore listener error:", error);
             });
         }
         
         async function saveToFirestore() {
-            if (!flightLogDocRef) return;
+            if (!flightLogDocRef || !flightData) return;
             try {
                 await setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: currentSectorIndex }, { merge: true });
             } catch (error) {
@@ -579,6 +624,7 @@
                 case 'from': case 'to': if (value.length === 3) target.blur(); break;
                 case 'edto': if (value.length === 12) target.blur(); break;
                 case 'taxi': if (target.value.length === 5) ui.inputs.off.focus(); break;
+                case 'pax': if (value.length === 3) target.blur(); break;
             }
             if (['cic', 'fo'].includes(key)) propagateValueToFutureSectors(key, target.value);
             if (target.classList.contains('time-input')) formatTimeInput(target);
@@ -589,7 +635,7 @@
             if (!flightData) return;
             let value = target.value;
             const data = flightData[currentSectorIndex];
-            target.style.fontSize = '';
+            
             const formatters = {
                 registration: v => v.length === 3 ? `9V-${v}` : v,
                 time: v => { const m = timeToMinutes(v.replace(':', '')); return m !== null ? minutesToHHMM(m) : v; },
@@ -600,13 +646,11 @@
                 optiClimb1: v => v.length === 6 ? `${v.substring(0,3)}kt/FL${v.substring(3,6)}` : v,
                 optiClimb2: v => v.length === 5 ? `${v.substring(0,3)}kt/M.${v.substring(3,5)}` : v,
                 crzWind: v => v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
-                edto: v => {
-                    if (v.length === 12) return `${v.substring(0,4)}-${v.substring(4,8)} (${v.substring(8,12)})`;
-                    if (v.length === 8) return `${v.substring(0,4)}-${v.substring(4,8)}`;
-                    return v;
-                },
-                elev: v => `${parseInt(v) || 0}ft`
+                edto: v => v.length === 12 ? `${v.substring(0,4)}-${v.substring(4,8)} (${v.substring(8,12)})` : (v.length === 8 ? `${v.substring(0,4)}-${v.substring(4,8)}` : v),
+                elev: v => `${parseInt(v) || 0}ft`,
+                cg: v => { const n = parseFloat(v); return isNaN(n) ? '' : `${v}%`; }
             };
+            
             if (key === 'flightNumber' || key === 'acNextUseFn') {
                 const rawValue = value.replace('SQ', '');
                 if (rawValue.length > 0) {
@@ -624,16 +668,22 @@
             } else {
                  let formattedValue = value;
                 if (target.classList.contains('time-input')) formattedValue = formatters.time(value);
-                else if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','cg','apd','fpr2','histBurn','histCarriage'].includes(key)) formattedValue = formatters.decimal(value);
+                else if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','apd','fpr2','histBurn','histCarriage'].includes(key)) formattedValue = formatters.decimal(value);
                 else if (formatters[key]) formattedValue = formatters[key](value);
                 target.value = formattedValue; data[key] = formattedValue; 
             }
-            if (key === 'registration') {
-                const formattedReg = data[key];
-                if (currentSectorIndex === 0) [1,2,3].forEach(i => { if(flightData[i]) flightData[i].registration = formattedReg; });
-                else if (currentSectorIndex === 2 && flightData[3]) flightData[3].registration = formattedReg;
-                else if (currentSectorIndex === 4 && flightData[5]) flightData[5].registration = formattedReg;
+            
+            if (['registration', 'bw', 'bi', 'defects'].includes(key)) {
+                const propValue = data[key];
+                if ([0, 2, 4].includes(currentSectorIndex) && currentSectorIndex < 5) {
+                    if(flightData[currentSectorIndex + 1]) flightData[currentSectorIndex + 1][key] = propValue;
+                }
+                if (key === 'registration' && currentSectorIndex === 0) {
+                     if(flightData[2]) flightData[2].registration = propValue;
+                     if(flightData[3]) flightData[3].registration = propValue;
+                }
             }
+
             if (key === 'date' && value) { target.placeholder = formatDateForDisplay(value); propagateValueToFutureSectors(key, value); }
             if (['from', 'to'].includes(key)) {
                 const iata = value.toUpperCase();
@@ -641,8 +691,8 @@
                 ui.inputs[`${key}Tz`].value = tz; ui.inputs[`${key}Tz`].style.display = (iata === 'SIN') ? 'none' : 'block';
                 data[`${key}Tz`] = tz;
                 if ([0,2,4].includes(currentSectorIndex) && currentSectorIndex < 5) {
-                    if (key === 'from') flightData[currentSectorIndex + 1].to = iata;
-                    if (key === 'to') flightData[currentSectorIndex + 1].from = iata;
+                    if (key === 'from' && flightData[currentSectorIndex+1]) flightData[currentSectorIndex + 1].to = iata;
+                    if (key === 'to' && flightData[currentSectorIndex+1]) flightData[currentSectorIndex + 1].from = iata;
                 }
             }
             if(key === 'crew') target.readOnly = true;
@@ -651,6 +701,8 @@
                 const numValue = target.value.replace(/[-+]/g, '');
                 target.value = numValue ? `${sign === 'M' ? '-' : ''}${numValue}` : ''; data.crzTemp = numValue;
             }
+            const focusMap = { std: 'sta', azfw: 'cg', bw: 'bi' };
+            if (focusMap[key]) ui.inputs[focusMap[key]].focus();
             if (key === 'std') autoCalculateReportTime(value);
             saveAndRecalculate();
         }
@@ -696,11 +748,12 @@
             Object.values(ui.calculated).forEach(field => { if(field) field.textContent = ''; });
             
             const aircraftType = getAircraftType();
-            const limits = aircraftType ? aircraftLimits[aircraftType] : { MZFW: 0, MTOW: 0, MLW: 0, PLW: 0 };
+            const limits = aircraftType ? aircraftLimits[aircraftType] : { MZFW: 0, MTOW: 0, MLW: 0, PLW: 0, EGT: '-' };
             
             ui.calculated.mzfw.textContent = aircraftType ? `MZFW: ${limits.MZFW.toFixed(1)}` : '';
             ui.calculated.mtow.textContent = aircraftType ? `MTOW: ${limits.MTOW.toFixed(1)}` : '';
             ui.calculated.mlw.textContent = aircraftType ? `MLW: ${limits.MLW.toFixed(1)}` : '';
+            ui.calculated.egt.textContent = limits.EGT;
 
             const crew = parseInt(data.crew) || 0, pax = parseInt(data.pax) || 0;
             ui.calculated.pob.textContent = pax > 0 ? (crew + pax) : '';
@@ -708,7 +761,7 @@
             const altn = parseFloat(data.altn) || 0, thirtyMin = parseFloat(data.thirtyMin) || 0;
             const reserves = altn + thirtyMin;
             ui.calculated.reserves.textContent = reserves > 0 ? reserves.toFixed(1) : '';
-            ui.containers.reservesGroup.classList.toggle('bordered', reserves > 0);
+            ui.containers.reservesGroup.style.display = (altn > 0 || thirtyMin > 0) ? 'flex' : 'none';
 
             const fuel = parseFloat(data.fuel) || 0, burn = parseFloat(data.burn) || 0;
             const azfw = parseFloat(data.azfw) || 0, ezfw2 = parseFloat(data.ezfw2) || 0, ezfw1 = parseFloat(data.ezfw1) || 0;
@@ -717,44 +770,48 @@
             const plw = zfwToUse > 0 ? fuel - burn - 0.3 + zfwToUse : 0;
             ui.calculated.plw.textContent = plw > 0 ? plw.toFixed(1) : '';
             
-            ui.calculated.ezfwDelta.textContent = (ezfw1 > 0 && ezfw2 > 0) ? `${(ezfw2 - ezfw1).toFixed(1)}` : '';
-            ui.calculated.azfwDelta.textContent = (azfw > 0 && ezfw2 > 0) ? `${(azfw - ezfw2).toFixed(1)}` : '';
+            const ezfwDelta = ezfw2 - ezfw1;
+            ui.calculated.ezfwDelta.textContent = (ezfw1 > 0 && ezfw2 > 0) ? `${ezfwDelta >= 0 ? '+' : ''}${ezfwDelta.toFixed(1)}` : '';
+            const azfwDelta = azfw - ezfw2;
+            ui.calculated.azfwDelta.textContent = (azfw > 0 && ezfw2 > 0) ? `${azfwDelta >= 0 ? '+' : ''}${azfwDelta.toFixed(1)}` : '';
             
             const ptow = (fuel + zfwToUse);
             ui.calculated.ptow.textContent = ptow > 0 ? ptow.toFixed(1) : '';
 
             const fpr2 = parseFloat(data.fpr2) || 0;
-            ui.calculated.tankerDelta.textContent = (fpr2 > 0 && burn > 0 && fuel > 0) ? (fpr2 + 0.6 + burn - fuel).toFixed(1) : '';
+            const showTankerDelta = fpr2 > 0;
+            ui.containers.tankerDeltaGroup.style.display = showTankerDelta ? 'flex' : 'none';
+            if(showTankerDelta) ui.calculated.tankerDelta.textContent = (burn > 0 && fuel > 0) ? (fpr2 + 0.6 + burn - fuel).toFixed(1) : '';
 
-            // --- Limit Checks ---
-            const checkLimit = (value, limit, element) => {
+            ui.containers.fuelGroup.classList.toggle('fuel-bordered', fuel > 0);
+
+            const checkLimit = (value, limit, labelEl, valueEl) => {
                 const isExceeded = value >= limit && limit > 0;
-                element.classList.toggle('limit-exceeded', isExceeded);
-                element.parentElement.classList.toggle('limit-exceeded-box', isExceeded);
-                if (element.id === 'mtow' || element.id === 'mlw' || element.id === 'mzfw') element.parentElement.previousElementSibling.classList.toggle('limit-exceeded', isExceeded);
-                else element.parentElement.querySelector('label').classList.toggle('limit-exceeded', isExceeded);
+                labelEl.classList.toggle('limit-exceeded', isExceeded);
+                valueEl.classList.toggle('limit-exceeded', isExceeded);
+                valueEl.parentElement.classList.toggle('limit-exceeded-box', isExceeded);
             };
             
-            if(aircraftType === 'MAX') {
-                checkLimit(ptow, 82.2, ui.calculated.mtow);
-                checkLimit(plw, 68.4, ui.calculated.plw);
-                [ui.inputs.ezfw1, ui.inputs.ezfw2, ui.inputs.azfw].forEach(el => checkLimit(parseFloat(el.value), 66.0, el));
-            } else if (aircraftType === 'NG') {
-                checkLimit(ptow, 79.1, ui.calculated.mtow);
-                checkLimit(plw, 65.4, ui.calculated.plw);
-                [ui.inputs.ezfw1, ui.inputs.ezfw2, ui.inputs.azfw].forEach(el => checkLimit(parseFloat(el.value), 62.8, el));
+            if (aircraftType) {
+                const limits = aircraftLimits[aircraftType];
+                checkLimit(ptow, aircraftType === 'MAX' ? 82.2 : 79.1, ui.inputs.ptow.previousElementSibling, ui.calculated.ptow);
+                checkLimit(plw, aircraftType === 'MAX' ? 68.4 : 65.4, ui.inputs.plw.previousElementSibling, ui.calculated.plw);
+                checkLimit(ezfw1, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.ezfw1.previousElementSibling, ui.inputs.ezfw1);
+                checkLimit(ezfw2, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.ezfw2.previousElementSibling, ui.inputs.ezfw2);
+                checkLimit(azfw, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.azfw.previousElementSibling, ui.inputs.azfw);
             }
-
 
             if (currentSectorIndex < 5 && flightData[currentSectorIndex + 1]) {
                 const next = flightData[currentSectorIndex + 1];
                 let gMins = calculateTimeDifference(data.sta, next.std);
                 if (gMins !== null && (currentSectorIndex === 1 || currentSectorIndex === 3)) gMins -= 60;
                 ui.calculated.gndTimeAvail.textContent = gMins !== null ? `${Math.floor(gMins/60)}h ${gMins%60}m` : '';
-                ui.calculated.myNextFlt.textContent = `${next.flightNumber||'----'} ${next.std||'----'} ${calculateLocalTime(next.std,next.fromTz)}`;
+                const nextUtc = next.std || '----';
+                const nextLocal = calculateLocalTime(next.std, next.fromTz);
+                ui.calculated.myNextFlt.innerHTML = `<span>${next.flightNumber||'----'} ${nextUtc}</span><span class="sub-field-value secondary">${nextLocal}</span>`;
             } else { ui.calculated.myNextFlt.textContent = ''; ui.calculated.gndTimeAvail.textContent = ''; }
             
-            ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '---/---';
+            ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
             const gndTimeForAcMins = calculateTimeDifference(data.eta, calculateTime(data.acNextUseStd, -60));
             ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
             
@@ -763,20 +820,20 @@
             ui.labels.conseqAvailLabel.classList.toggle('strikethrough', data.conseqAvailStrikethrough);
             ui.calculated.conseqAvail.classList.toggle('strikethrough', data.conseqAvailStrikethrough);
 
-            const tod = calculateTimeDifference(data.taxi, data.off), tid = calculateTimeDifference(data.on, data.in), aft = calculateTimeDifference(data.off, data.on), abt = calculateTimeDifference(data.out, data.in), ddd = calculateDelay(data.std, data.out), aaa = calculateDelay(data.sta, data.in), blk = calculateTimeDifference(data.std, data.sta), eftMins = timeToMinutes(data.eft);
-            if (blk !== null) ui.calculated.blk.textContent = minutesToHHMM(blk);
-            if (tod !== null) ui.calculated.tod.textContent = `TAXI-OUT: ${minutesToHHMM(tod)}`;
-            if (tid !== null) ui.calculated.tid.textContent = `TAXI-IN: ${minutesToHHMM(tid)}`;
-            if (aft !== null) ui.calculated.aft.textContent = `AFT: ${minutesToHHMM(aft)}`;
-            if (abt !== null) ui.calculated.abt.textContent = `ABT: ${minutesToHHMM(abt)}`;
-            if (aft !== null && eftMins !== null) { const diff = aft - eftMins; if (diff > 0) setFieldText(ui.calculated.aftd, `${diff}m longer`, 'red'); else if (diff < 0) setFieldText(ui.calculated.aftd, `${-diff}m shorter`, 'green'); else setFieldText(ui.calculated.aftd, 'same as OFP'); }
-            if (abt !== null && eftMins !== null) { const diff = abt - eftMins; if (diff > 0) setFieldText(ui.calculated.sib, `${diff}m spare in BLK`); else if (diff < 0) setFieldText(ui.calculated.sib, `${-diff}m shorter`, 'amber'); else setFieldText(ui.calculated.sib, 'FLIGHT TIME IS BLK TIME'); }
-            if (ddd !== null) { if (ddd > 0) setFieldText(ui.calculated.ddd, `DEP DLY: +${ddd}m`, 'red'); else if (ddd < 0) setFieldText(ui.calculated.ddd, `${-ddd}m early`, 'green'); else setFieldText(ui.calculated.ddd, 'ON TIME'); }
-            if (aaa !== null) { if (aaa > 0) setFieldText(ui.calculated.aaa, `ARR DLY: +${aaa}m`, 'red'); else if (aaa < 0) setFieldText(ui.calculated.aaa, `${-aaa}m early`, 'green'); else setFieldText(ui.calculated.aaa, 'ON TIME'); }
-            if (ddd > 0 && ![0, 2, 4].includes(currentSectorIndex) && prevSectorData) { const prevAAA = calculateDelay(prevSectorData.sta, prevSectorData.in); if (prevAAA > 0 && !data.conseqAvailStrikethrough) { const cddd = Math.min(ddd, prevAAA); setFieldText(ui.calculated.cddd, `CON: ${cddd}m`); const addd = ddd - cddd; if (addd > 0) setFieldText(ui.calculated.addd, `ADD: ${addd}m`); } }
-            if (aaa > 0 && ddd > 0) { const caaa = Math.min(aaa, ddd); setFieldText(ui.calculated.caaa, `CON: ${caaa}m`); const aaaa = aaa - caaa; if (aaaa > 0) setFieldText(ui.calculated.aaaa, `ADD: ${aaaa}m`); }
-            ui.calculated.stdl.textContent = calculateLocalTime(data.std, data.fromTz);
-            ui.calculated.stal.textContent = calculateLocalTime(data.sta, data.toTz);
+            const tod=calculateTimeDifference(data.taxi,data.off), tid=calculateTimeDifference(data.on,data.in), aft=calculateTimeDifference(data.off,data.on), abt=calculateTimeDifference(data.out,data.in), ddd=calculateDelay(data.std,data.out), aaa=calculateDelay(data.sta,data.in), blk=calculateTimeDifference(data.std,data.sta), eftMins=timeToMinutes(data.eft);
+            if(blk!==null) ui.calculated.blk.textContent=minutesToHHMM(blk);
+            if(tod!==null) ui.calculated.tod.textContent=`TAXI-OUT: ${minutesToHHMM(tod)}`;
+            if(tid!==null) ui.calculated.tid.textContent=`TAXI-IN: ${minutesToHHMM(tid)}`;
+            if(aft!==null) ui.calculated.aft.textContent=`AFT: ${minutesToHHMM(aft)}`;
+            if(abt!==null) ui.calculated.abt.textContent=`ABT: ${minutesToHHMM(abt)}`;
+            if(aft!==null && eftMins!==null){const diff=aft-eftMins;if(diff>0)setFieldText(ui.calculated.aftd,`${diff}m longer`,'red');else if(diff<0)setFieldText(ui.calculated.aftd,`${-diff}m shorter`,'green');else setFieldText(ui.calculated.aftd,'same as OFP');}
+            if(abt!==null && eftMins!==null){const diff=abt-eftMins;if(diff>0)setFieldText(ui.calculated.sib,`${diff}m spare in BLK`);else if(diff<0)setFieldText(ui.calculated.sib,`${-diff}m shorter`,'amber');else setFieldText(ui.calculated.sib,'FLIGHT TIME IS BLK TIME');}
+            if(ddd!==null){if(ddd>0)setFieldText(ui.calculated.ddd,`DEP DLY: +${ddd}m`,'red');else if(ddd<0)setFieldText(ui.calculated.ddd,`${-ddd}m early`,'green');else setFieldText(ui.calculated.ddd,'ON TIME');}
+            if(aaa!==null){if(aaa>0)setFieldText(ui.calculated.aaa,`ARR DLY: +${aaa}m`,'red');else if(aaa<0)setFieldText(ui.calculated.aaa,`${-aaa}m early`,'green');else setFieldText(ui.calculated.aaa,'ON TIME');}
+            if(ddd>0&&![0,2,4].includes(currentSectorIndex)&&prevSectorData){const prevAAA=calculateDelay(prevSectorData.sta,prevSectorData.in);if(prevAAA>0&&!data.conseqAvailStrikethrough){const cddd=Math.min(ddd,prevAAA);setFieldText(ui.calculated.cddd,`CON: ${cddd}m`);const addd=ddd-cddd;if(addd>0)setFieldText(ui.calculated.addd,`ADD: ${addd}m`);}}
+            if(aaa>0&&ddd>0){const caaa=Math.min(aaa,ddd);setFieldText(ui.calculated.caaa,`CON: ${caaa}m`);const aaaa=aaa-caaa;if(aaaa>0)setFieldText(ui.calculated.aaaa,`ADD: ${aaaa}m`);}
+            ui.calculated.stdl.textContent=calculateLocalTime(data.std,data.fromTz);
+            ui.calculated.stal.textContent=calculateLocalTime(data.sta,data.toTz);
         }
 
         function formatTimeInput(target) { let v = target.value.replace(/[^0-9]/g, ''); if (v.length > 4) v = v.slice(0, 4); target.value = v.length > 2 ? v.slice(0, 2) + ':' + v.slice(2) : v; if (v.length === 4) target.blur(); }
@@ -786,12 +843,12 @@
         function calculateDelay(start, end) { let sM = timeToMinutes(start), eM = timeToMinutes(end); if (sM === null || eM === null) return null; if (Math.abs(eM-sM) > 720) { if (eM < sM) eM += 1440; else sM += 1440; } return eM - sM; }
         function calculateTime(time, offset) { let sM = timeToMinutes(time); return sM === null ? null : minutesToHHMM((sM + offset + 1440) % 1440); }
         function calculateLocalTime(utc, offset) { const uM = timeToMinutes(utc); if (uM === null || !offset) return ''; const o = parseFloat(offset); return isNaN(o) ? '' : `${minutesToHHMM((uM + o*60 + 1440)%1440)} LT`; }
-        function formatDateForDisplay(dStr) { if (!dStr) return ''; const d = new Date(dStr + 'T00:00:00Z'); const day = d.getUTCDate().toString().padStart(2, '0'); const month = d.toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'}); const weekday = d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}); return `${day}${month.charAt(0).toUpperCase()+month.slice(1)} ${weekday.charAt(0).toUpperCase()+weekday.slice(1)}`; }
+        function formatDateForDisplay(dStr) { if (!dStr) return ''; const d = new Date(dStr + 'T00:00:00Z'); const day = d.getUTCDate().toString().padStart(2, '0'); const month = d.toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'}); const weekday = d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}); return `${day} ${month.charAt(0).toUpperCase()+month.slice(1)} ${weekday.charAt(0).toUpperCase()+weekday.slice(1)}`; }
         function setTomorrowDate() { const t = new Date(); t.setUTCDate(t.getUTCDate() + 1); const y = t.getUTCFullYear(), m = (t.getUTCMonth()+1).toString().padStart(2,'0'), d = t.getUTCDate().toString().padStart(2,'0'); ui.inputs.date.value = `${y}-${m}-${d}`; handleInputBlur('date', ui.inputs.date); }
         function setFieldText(el, text, color = null) { el.textContent = text; el.style.color = color ? `var(--${color}-color)` : ''; }
         function updateActiveSectorButton() { ui.toolbar.sectorButtons.forEach((btn, i) => btn.classList.toggle('active', i === currentSectorIndex)); }
         function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => flightData[i].report = rpt); } } }
-        function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex; i < 6; i++) flightData[i][key] = val; }
+        function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
         function toggleCrzTemp() { if (!flightData) return; const newSign = ui.buttons.crzTempToggle.textContent === 'M' ? 'P' : 'M'; ui.buttons.crzTempToggle.textContent = newSign; flightData[currentSectorIndex].crzTempSign = newSign; handleInputBlur('crzTemp', ui.inputs.crzTemp); }
         function toggleConseqAvail() { if (!flightData) return; flightData[currentSectorIndex].conseqAvailStrikethrough = !flightData[currentSectorIndex].conseqAvailStrikethrough; saveAndRecalculate(); }
         function clearCurrentSector() { if (!flightData) return; if (confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; saveAndRecalculate(); } }
@@ -807,4 +864,3 @@
     </script>
 </body>
 </html>
-
