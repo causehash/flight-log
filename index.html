@@ -95,6 +95,7 @@
             color: var(--text-color); text-transform: uppercase;
             font-weight: 500; cursor: default;
             line-height: 1.1;
+            white-space: nowrap;
         }
 
         .field-group {
@@ -125,8 +126,13 @@
             gap: 5px 2px;
         }
         .flight-data-section .field-group {
-            flex: 1 1 auto;
-            min-width: 65px;
+            flex: 1 1 65px; /* Allow shrinking but prefer 65px base */
+            min-width: 60px; /* Prevent getting too small */
+        }
+        @media (min-width: 768px) { /* iPad mini portrait and larger */
+             .flight-data-section .data-section-content {
+                flex-wrap: nowrap;
+             }
         }
         .input-with-tz {
             position: relative; width: 100%;
@@ -165,11 +171,17 @@
         }
         .flight-planning-section label { height: 11px; }
         .flight-planning-section .field-value, .flight-planning-section .calculated, .flight-planning-section select.field-value {
-            height: 24px; font-size: clamp(12px, 3vw, 14px);
+            height: 24px; font-size: clamp(11px, 3vw, 14px);
         }
         #remarks-group { grid-column: 1 / -1; }
         .limit-exceeded { color: var(--red-color) !important; }
         .limit-exceeded-box { border: 1px solid var(--red-color); border-radius: 8px; }
+        .horizontal-limits {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
         .temp-toggle { height: 24px; width: 24px; font-size: 12px; background-color: transparent; border: none; color: var(--text-color); border-radius: 4px; margin-right: 2px; }
 
         /* --- Toolbar & Modals --- */
@@ -202,6 +214,11 @@
         #delay-codes-container summary { font-weight: bold; cursor: pointer; }
         .delay-code-item { padding: 2px 0 2px 15px; font-size: clamp(11px, 2.5vw, 13px); }
         #quick-ref-container { width: 100%; margin-bottom: 10px; }
+        #quick-ref-delays-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 0 10px;
+        }
         #quick-ref-title { margin: 0 0 5px 0; font-size: clamp(12px, 2.8vw, 14px); text-align: center; }
 
         .modal-textarea { width: calc(100% - 10px); height: 150px; background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 14px; padding: 5px; }
@@ -289,10 +306,15 @@
                 <h2 class="section-title">FLIGHT PLANNING</h2>
                 <div class="field-group"><label for="ezfw1">EZFW 1</label><input type="text" id="ezfw1" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="ezfw2">EZFW 2</label><input type="text" id="ezfw2" class="field-value" inputmode="decimal"><div id="ezfwDelta" class="sub-field-value"></div></div>
-                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div><div id="mzfw" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div></div>
                 <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="decimal"></div>
-                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div><div id="mtow" class="sub-field-value"></div></div>
-                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div><div id="mlw" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div></div>
+                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div></div>
+                <div class="horizontal-limits">
+                    <div id="mzfw" class="sub-field-value"></div>
+                    <div id="mtow" class="sub-field-value"></div>
+                    <div id="mlw" class="sub-field-value"></div>
+                </div>
 
                 <div class="field-group"><label for="sid">SID</label><input type="text" id="sid" class="field-value"></div>
                 <div class="field-group"><label for="app">APP</label><select id="app" class="field-value"><option>ILS</option><option>RNP</option><option>VOR</option></select></div>
@@ -315,7 +337,7 @@
                 <div class="field-group"><label for="bi">BI</label><input type="text" id="bi" class="field-value" inputmode="numeric" maxlength="3"></div>
                 <div class="field-group"><label for="apd">APD</label><input type="text" id="apd" class="field-value" inputmode="numeric" maxlength="2"></div>
                 <div class="field-group"><label>MAX EGT</label><div id="egt" class="calculated"></div></div>
-                <div class="field-group"><label for="fpr2">2ND SECT. FPR</label><input type="text" id="fpr2" class="field-value" inputmode="decimal"></div>
+                <div class="field-group"><label for="fpr2">NEXT FPR</label><input type="text" id="fpr2" class="field-value" inputmode="decimal"></div>
                 <div class="field-group" id="tanker-delta-group"><label>TANKER DELTA</label><div id="tankerDelta" class="calculated"></div></div>
                 <div class="field-group"><label for="turb">TURB</label><input type="text" id="turb" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="terr">TERR</label><input type="text" id="terr" class="field-value" inputmode="numeric"></div>
@@ -754,7 +776,7 @@
             
             ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
             const gndTimeForAcMins = calculateTimeDifference(data.eta, calculateTime(data.acNextUseStd, -60));
-            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
+            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gMins%60}m` : '';
             
             if (prevSectorData) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `+${prevAaa}m` : '';
             } else { ui.calculated.conseqAvail.textContent = ''; }
@@ -784,7 +806,16 @@
         function calculateDelay(start, end) { let sM = timeToMinutes(start), eM = timeToMinutes(end); if (sM === null || eM === null) return null; if (Math.abs(eM-sM) > 720) { if (eM < sM) eM += 1440; else sM += 1440; } return eM - sM; }
         function calculateTime(time, offset) { let sM = timeToMinutes(time); return sM === null ? null : minutesToHHMM((sM + offset + 1440) % 1440); }
         function calculateLocalTime(utc, offset) { const uM = timeToMinutes(utc); if (uM === null || !offset) return ''; const o = parseFloat(offset); return isNaN(o) ? '' : `${minutesToHHMM((uM + o*60 + 1440)%1440)} LT`; }
-        function formatDateForDisplay(dStr) { if (!dStr) return ''; const d = new Date(dStr + 'T00:00:00Z'); const day = d.getUTCDate().toString().padStart(2, '0'); const month = d.toLocaleDateString('en-GB',{month:'short',timeZone:'UTC'}); const weekday = d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'UTC'}); return `${day} ${month.charAt(0).toUpperCase()+month.slice(1)} ${weekday.charAt(0).toUpperCase()+weekday.slice(1)}`; }
+        function formatDateForDisplay(dStr) {
+            if (!dStr) return '';
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            const d = new Date(dStr + 'T00:00:00Z');
+            const dayOfMonth = d.getUTCDate().toString().padStart(2, '0');
+            const month = months[d.getUTCMonth()];
+            const dayOfWeek = days[d.getUTCDay()];
+            return `${dayOfMonth} ${month} ${dayOfWeek}`;
+        }
         function setTomorrowDate() { const t = new Date(); t.setUTCDate(t.getUTCDate() + 1); const y = t.getUTCFullYear(), m = (t.getUTCMonth()+1).toString().padStart(2,'0'), d = t.getUTCDate().toString().padStart(2,'0'); ui.inputs.date.value = `${y}-${m}-${d}`; handleInputBlur('date', ui.inputs.date); }
         function setFieldText(el, text, color = null) { el.textContent = text; el.style.color = color ? `var(--${color}-color)` : ''; }
         function updateActiveSectorButton() { ui.toolbar.sectorButtons.forEach((btn, i) => btn.classList.toggle('active', i === currentSectorIndex)); }
@@ -895,7 +926,7 @@
             });
 
             const firstSector = sectorsWithData[0];
-            const filename = `${firstSector.date}-${firstSector.flightNumber}.pdf`;
+            const filename = `${formatDateForDisplay(firstSector.date)}-${firstSector.flightNumber}.pdf`;
             doc.save(filename);
         }
 
