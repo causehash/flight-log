@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flight Log</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --background-color: #000000;
@@ -16,6 +17,7 @@
             --toolbar-bg: #1c1c1e;
             --button-bg: #3a3a3c;
             --subtle-text-color: #8e8e93;
+            --navy-blue-bg: #000080;
         }
 
         body, html {
@@ -23,7 +25,7 @@
             background-color: var(--background-color);
             color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            font-size: 14px;
+            font-size: 16px;
             -webkit-text-size-adjust: none;
         }
 
@@ -52,22 +54,26 @@
         }
 
         #app-container {
-            padding: 10px 10px 80px 10px;
+            padding: 5px 5px 80px 5px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 2px;
         }
 
         .data-section {
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 20px 15px 15px 15px;
+            padding: 15px 10px 10px 10px;
             display: flex;
             flex-wrap: wrap;
             justify-content: space-around;
             align-items: flex-start;
             position: relative;
-            margin-top: 10px;
+            margin-top: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .data-section.flight-data-odd-sector {
+            background-color: var(--navy-blue-bg);
         }
         
         .section-title {
@@ -76,15 +82,16 @@
             left: 50%;
             transform: translateX(-50%);
             background-color: var(--background-color);
-            padding: 0 10px;
-            font-size: 12px;
+            padding: 0 8px;
+            font-size: clamp(11px, 2.5vw, 13px);
             font-weight: bold;
             color: var(--text-color);
             white-space: nowrap;
         }
         
         label {
-            font-size: 10px; margin-bottom: 0;
+            font-size: clamp(9px, 2.2vw, 11px);
+            margin-bottom: 0;
             color: var(--text-color); text-transform: uppercase;
             font-weight: 500; cursor: default;
             line-height: 1.1;
@@ -93,43 +100,33 @@
         .field-group {
             flex: 1; display: flex; flex-direction: column;
             align-items: center; text-align: center;
-            min-width: 0; padding: 0 2px;
+            min-width: 0; padding: 0 1px;
         }
         
         .field-value, .calculated, select.field-value {
             background-color: transparent; border: none;
             color: var(--text-color); text-align: center;
-            width: 95%; padding: 2px 0; font-size: 16px;
+            width: 98%; padding: 1px 0;
+            font-size: clamp(14px, 3.5vw, 18px);
             text-transform: uppercase; border-radius: 4px;
             font-weight: 600;
             -moz-appearance: none; -webkit-appearance: none; appearance: none;
         }
         select.field-value { text-align-last: center; }
         input:focus, select:focus { background-color: var(--border-color); outline: 2px solid var(--focus-color); }
-        
+        .sub-field-value { padding: 0; min-height: 1em; line-height: 1; font-size: clamp(9px, 2vw, 11px); color: var(--subtle-text-color); }
+
         /* --- Section 1: Flight Data --- */
-        .flight-data-section-content {
+        .flight-data-section .data-section-content {
             display: flex;
-            flex-direction: column;
-            width: 100%;
-            gap: 5px;
-        }
-        .flight-data-row {
-            display: flex;
+            flex-wrap: wrap;
             justify-content: space-around;
             width: 100%;
-            gap: 5px;
+            gap: 5px 2px;
         }
-        .flight-data-section-content .field-group {
-            flex: 1 1 0;
-            min-width: 50px;
-        }
-        .flight-data-section-content label {
-            font-size: clamp(8px, 2.2vw, 10px);
-            white-space: nowrap;
-        }
-        .flight-data-section-content .field-value {
-             font-size: clamp(12px, 3vw, 16px);
+        .flight-data-section .field-group {
+            flex: 1 1 auto;
+            min-width: 65px;
         }
         .input-with-tz {
             position: relative; width: 100%;
@@ -137,130 +134,81 @@
         }
         .timezone-input {
             position: absolute; top: 50%; transform: translateY(-50%);
-            right: 2px; width: 30px; font-size: 9px;
+            right: 1px; width: 30px; font-size: 9px;
             background-color: transparent; border: none;
             color: var(--subtle-text-color); text-align: center; padding: 1px;
         }
 
         /* --- Section 2: Timings --- */
-        .timings-section { flex-direction: column; font-size: 16px; gap: 0; padding-bottom: 5px; }
+        .timings-section { flex-direction: column; gap: 0; padding-bottom: 5px; }
         .timings-row, .timings-sub-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
         .timings-row { align-items: flex-start; }
-        .timings-sub-row { font-size: 12px; min-height: 24px; }
-        .local-time { margin-top: -6px; }
-        .main-time-field { font-size: 18px; font-weight: 700; }
-        .sub-field-value { padding: 1px 0; min-height: 1em; line-height: 1.2; font-size: 10px; }
-        .sub-field-value.secondary { font-size: 0.9em; color: var(--subtle-text-color); }
-        #conseq-avail-group { flex: 0.5; font-size: 10px; }
+        .timings-sub-row { font-size: 12px; min-height: 20px; }
+        .local-time { margin-top: -4px; }
+        .main-time-field { font-size: clamp(16px, 4vw, 20px); font-weight: 700; }
+        .timings-sub-row .sub-field-value { font-size: clamp(9px, 2.2vw, 11px); }
+        #conseq-avail-group { flex: 0.5; }
         #conseq-avail-group .calculated { font-size: 10px; }
         .timings-turnaround-row {
-            border-top: 1px solid var(--border-color);
-            margin-top: 8px;
-            padding-top: 8px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-            width: 100%;
-            gap: 8px;
+            border-top: 1px solid var(--border-color); margin-top: 5px; padding-top: 5px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+            width: 100%; gap: 5px;
         }
-        .timings-turnaround-row .field-group {
-            min-width: 60px;
-        }
-        .timings-turnaround-row label {
-            font-size: 10px;
-        }
-        .timings-turnaround-row .calculated,
-        .timings-turnaround-row .field-value {
-            font-size: 12px;
-            font-weight: normal;
-        }
-        #myNextFlt-group .calculated {
-            display: flex;
-            flex-direction: column;
-        }
-         #acNextUse-group .calculated {
-            font-size: 10px;
-            min-height: 1em;
-        }
+        #myNextFlt-group .calculated { display: flex; flex-direction: column; }
+         #acNextUse-group .calculated { font-size: 10px; min-height: 1em; }
 
         /* --- Section 3: Flight Planning --- */
         .flight-planning-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
-            gap: 10px 8px;
-            width: 100%;
-            align-items: start;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px 5px; width: 100%; align-items: start;
         }
-        .flight-planning-section .field-group { min-width: 60px; }
-        .flight-planning-section label { height: 12px; font-size: 10px; }
+        .flight-planning-section label { height: 11px; }
         .flight-planning-section .field-value, .flight-planning-section .calculated, .flight-planning-section select.field-value {
-            height: 28px; padding: 0; display: flex;
-            align-items: center; justify-content: center;
-            font-size: 12px; font-weight: normal; width: 100%;
+            height: 24px; font-size: clamp(12px, 3vw, 14px);
         }
-        #reserves-group.bordered, .fuel-bordered {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 2px;
-        }
+        #remarks-group { grid-column: 1 / -1; }
         .limit-exceeded { color: var(--red-color) !important; }
-        .limit-exceeded-box { border: 1px solid var(--red-color); border-radius: 8px; padding: 2px; }
-        .temp-toggle {
-            height: 28px; width: 28px; font-size: 12px;
-            background-color: transparent; border: none;
-            color: var(--text-color); border-radius: 4px; margin-right: 4px;
-        }
-        .horizontal-limits {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-        }
+        .limit-exceeded-box { border: 1px solid var(--red-color); border-radius: 8px; }
+        .temp-toggle { height: 24px; width: 24px; font-size: 12px; background-color: transparent; border: none; color: var(--text-color); border-radius: 4px; margin-right: 2px; }
 
         /* --- Toolbar & Modals --- */
         #toolbar {
             position: fixed; bottom: 0; left: 0; right: 0;
             background-color: var(--toolbar-bg);
-            padding: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            padding: 8px; padding-bottom: calc(8px + env(safe-area-inset-bottom));
             border-top: 1px solid var(--border-color);
             display: flex; justify-content: space-between; align-items: center;
             z-index: 100;
         }
         #user-id-display {
-            position: fixed; top: 10px; right: 10px;
+            position: fixed; top: 8px; right: 8px;
             background-color: var(--button-bg); color: var(--text-color);
-            padding: 5px 10px; border-radius: 8px;
-            font-size: 12px; z-index: 101;
+            padding: 4px 8px; border-radius: 8px;
+            font-size: 11px; z-index: 101;
         }
-        .sector-buttons, .action-buttons { display: flex; gap: 5px; }
+        .sector-buttons, .action-buttons { display: flex; gap: 4px; }
         #toolbar button {
             background-color: var(--button-bg); color: var(--text-color);
-            border: none; padding: 10px 15px; border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
+            border: none; padding: 8px 12px; border-radius: 8px;
+            font-size: clamp(12px, 3vw, 14px); font-weight: 600; cursor: pointer;
         }
         #toolbar button.active { background-color: var(--focus-color); color: white; }
         #sign-out-btn { background-color: var(--red-color); }
+        #export-pdf-btn { background-color: var(--green-color); }
 
-        .modal {
-            display: none; position: fixed; z-index: 200;
-            left: 0; top: 0; width: 100%; height: 100%;
-            overflow: auto; background-color: rgba(0,0,0,0.7);
-            color: var(--text-color);
-        }
-        .modal-content {
-            background-color: var(--toolbar-bg); margin: 15% auto;
-            padding: 20px; border: 1px solid var(--border-color);
-            border-radius: 12px; width: 80%; max-width: 500px;
-            display: flex; flex-direction: column; gap: 15px;
-        }
-        .modal-textarea {
-            width: 100%; height: 150px; background-color: var(--button-bg);
-            color: var(--text-color); border: 1px solid var(--border-color);
-            border-radius: 8px; font-family: inherit; font-size: 14px;
-        }
-        .modal-content button {
-             background-color: var(--focus-color); color: white;
-             border: none; padding: 10px 15px; border-radius: 8px;
-             font-size: 14px; font-weight: 600; cursor: pointer;
-        }
+        /* --- Delay Section --- */
+        #delay-codes-container details { margin-top: 10px; }
+        #delay-codes-container summary { font-weight: bold; cursor: pointer; }
+        .delay-code-item { padding: 2px 0 2px 15px; font-size: clamp(11px, 2.5vw, 13px); }
+        #quick-ref-container { width: 100%; margin-bottom: 10px; }
+        #quick-ref-title { margin: 0 0 5px 0; font-size: clamp(12px, 2.8vw, 14px); text-align: center; }
+
+        .modal-textarea { width: calc(100% - 10px); height: 150px; background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 14px; padding: 5px; }
+        /* Other modal styles from original file remain */
+        .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); color: var(--text-color); }
+        .modal-content { background-color: var(--toolbar-bg); margin: 15% auto; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; width: 80%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
+        .modal-content button { background-color: var(--focus-color); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
         .modal-trigger.field-value { cursor: pointer; }
     </style>
 </head>
@@ -276,22 +224,18 @@
         <div id="user-id-display">Connecting...</div>
         <div id="app-container">
             <!-- SECTION 1: FLIGHT DATA -->
-            <section class="data-section">
+            <section id="flight-data-section" class="data-section flight-data-section">
                 <h2 class="section-title">FLIGHT DATA</h2>
-                <div class="flight-data-section-content">
-                    <div class="flight-data-row">
-                        <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
-                        <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder="" onfocus="(this.type='date')" onblur="(this.type='text')"></div>
-                        <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" placeholder="UTC"></div></div>
-                        <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" placeholder="UTC"></div></div>
-                    </div>
-                    <div class="flight-data-row">
-                        <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
-                        <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
-                        <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
-                        <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
-                        <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
-                    </div>
+                <div class="data-section-content">
+                    <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
+                    <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder="" onfocus="(this.type='date')" onblur="(this.type='text')"></div>
+                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" placeholder="UTC"></div></div>
+                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" placeholder="UTC"></div></div>
+                    <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
+                    <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
+                    <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
+                    <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
+                    <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
                 </div>
             </section>
 
@@ -306,11 +250,11 @@
                     <div class="field-group"><label for="in">IN</label><input type="text" id="in" class="field-value time-input main-time-field"></div>
                 </div>
                 <div class="timings-sub-row">
-                    <div class="field-group"><div id="ddd" class="sub-field-value"></div><div id="cddd" class="sub-field-value secondary"></div><div id="addd" class="sub-field-value secondary"></div></div>
+                    <div class="field-group"><div id="ddd" class="sub-field-value"></div><div id="cddd" class="sub-field-value"></div><div id="addd" class="sub-field-value"></div></div>
                     <div class="field-group"><div id="tod" class="sub-field-value"></div></div>
                     <div class="field-group"></div>
                     <div class="field-group"><div id="tid" class="sub-field-value"></div></div>
-                    <div class="field-group"><div id="aaa" class="sub-field-value"></div><div id="caaa" class="sub-field-value secondary"></div><div id="aaaa" class="sub-field-value secondary"></div></div>
+                    <div class="field-group"><div id="aaa" class="sub-field-value"></div><div id="caaa" class="sub-field-value"></div><div id="aaaa" class="sub-field-value"></div></div>
                 </div>
                 <div class="timings-row">
                      <div id="conseq-avail-group" class="field-group" style="display: none;">
@@ -345,11 +289,10 @@
                 <h2 class="section-title">FLIGHT PLANNING</h2>
                 <div class="field-group"><label for="ezfw1">EZFW 1</label><input type="text" id="ezfw1" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="ezfw2">EZFW 2</label><input type="text" id="ezfw2" class="field-value" inputmode="decimal"><div id="ezfwDelta" class="sub-field-value"></div></div>
-                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div><div id="mzfw" class="sub-field-value"></div></div>
                 <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="decimal"></div>
-                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div></div>
-                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div></div>
-                <div class="field-group" style="grid-column: span 3;"><div class="horizontal-limits"><div id="mzfw" class="sub-field-value secondary"></div><div id="mtow" class="sub-field-value secondary"></div><div id="mlw" class="sub-field-value secondary"></div></div></div>
+                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div><div id="mtow" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div><div id="mlw" class="sub-field-value"></div></div>
 
                 <div class="field-group"><label for="sid">SID</label><input type="text" id="sid" class="field-value"></div>
                 <div class="field-group"><label for="app">APP</label><select id="app" class="field-value"><option>ILS</option><option>RNP</option><option>VOR</option></select></div>
@@ -371,12 +314,12 @@
                 <div class="field-group"><label for="bw">BW</label><input type="text" id="bw" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="bi">BI</label><input type="text" id="bi" class="field-value" inputmode="numeric" maxlength="3"></div>
                 <div class="field-group"><label for="apd">APD</label><input type="text" id="apd" class="field-value" inputmode="numeric" maxlength="2"></div>
-                <div class="field-group"><label>EGT</label><div id="egt" class="calculated"></div></div>
-                <div class="field-group"><label for="fpr2">2ND SECTOR FPR</label><input type="text" id="fpr2" class="field-value" inputmode="decimal"></div>
+                <div class="field-group"><label>MAX EGT</label><div id="egt" class="calculated"></div></div>
+                <div class="field-group"><label for="fpr2">2ND SECT. FPR</label><input type="text" id="fpr2" class="field-value" inputmode="decimal"></div>
                 <div class="field-group" id="tanker-delta-group"><label>TANKER DELTA</label><div id="tankerDelta" class="calculated"></div></div>
                 <div class="field-group"><label for="turb">TURB</label><input type="text" id="turb" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="terr">TERR</label><input type="text" id="terr" class="field-value" inputmode="numeric"></div>
-                <div class="field-group"><label for="flightLevels">Flight Levels</label><input type="text" id="flightLevels" class="field-value" inputmode="numeric"></div>
+                <div class="field-group"><label for="flightLevels">FLs</label><input type="text" id="flightLevels" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="optiClimb1">Opti Climb 1</label><input type="text" id="optiClimb1" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="optiClimb2">Opti Climb 2</label><input type="text" id="optiClimb2" class="field-value" inputmode="numeric"></div>
                 <div class="field-group">
@@ -395,13 +338,13 @@
                 <div class="field-group"><label for="histCarriage">HIST. CARRIAGE</label><input type="text" id="histCarriage" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="afir">AFIR</label><input type="text" id="afir" class="field-value modal-trigger" readonly></div>
                 <div class="field-group"><label for="notam">NOTAM</label><input type="text" id="notam" class="field-value modal-trigger" readonly></div>
-                <div class="field-group"><label for="defects">DEFECTS</label><input type="text" id="defects" class="field-value modal-trigger" readonly></div>
+                <div id="remarks-group" class="field-group"><label for="remarks">REMARKS</label><input type="text" id="remarks" class="field-value modal-trigger" readonly></div>
             </section>
 
             <!-- SECTION 4: DELAY ATTRIBUTION -->
             <section class="data-section">
                 <h2 class="section-title">DELAY ATTRIBUTION</h2>
-                 <div id="quick-ref-container" style="display: none;">
+                 <div id="quick-ref-container">
                     <h3 id="quick-ref-title">QUICK REFERENCE DELAYS</h3>
                     <div id="quick-ref-delays-container"></div>
                 </div>
@@ -423,13 +366,14 @@
                 <button id="clear-sector-btn">CLEAR SECTOR</button>
                 <button id="clear-all-btn">CLEAR ALL</button>
                 <button id="sign-out-btn">Sign Out</button>
+                <button id="export-pdf-btn">EXPORT</button>
             </div>
         </div>
 
         <!-- MODALS -->
         <div id="afir-modal" class="modal"><div class="modal-content"><h2>AFIR Details</h2><textarea id="afir-textarea" class="modal-textarea"></textarea><button id="save-afir-btn">Save & Close</button></div></div>
         <div id="notam-modal" class="modal"><div class="modal-content"><h2>NOTAM Details</h2><textarea id="notam-textarea" class="modal-textarea"></textarea><button id="save-notam-btn">Save & Close</button></div></div>
-        <div id="defects-modal" class="modal"><div class="modal-content"><h2>Defects Details</h2><textarea id="defects-textarea" class="modal-textarea"></textarea><button id="save-defects-btn">Save & Close</button></div></div>
+        <div id="remarks-modal" class="modal"><div class="modal-content"><h2>Remarks</h2><textarea id="remarks-textarea" class="modal-textarea"></textarea><button id="save-remarks-btn">Save & Close</button></div></div>
     </div>
     
     <script type="module">
@@ -464,15 +408,16 @@
                         optiClimb2: document.getElementById('optiClimb2'), crzWind: document.getElementById('crzWind'), crzTemp: document.getElementById('crzTemp'), edto: document.getElementById('edto'), arrGate: document.getElementById('arrGate'),
                         eta: document.getElementById('eta'), acNextUseFn: document.getElementById('acNextUseFn'), acNextUseStd: document.getElementById('acNextUseStd'),
                         histBurn: document.getElementById('histBurn'), histCarriage: document.getElementById('histCarriage'), 
-                        afir: document.getElementById('afir'), notam: document.getElementById('notam'), defects: document.getElementById('defects')
+                        afir: document.getElementById('afir'), notam: document.getElementById('notam'), remarks: document.getElementById('remarks')
                     },
                     buttons: {
                         crzTempToggle: document.getElementById('crzTempToggle'),
                         saveAfirBtn: document.getElementById('save-afir-btn'),
                         saveNotamBtn: document.getElementById('save-notam-btn'),
-                        saveDefectsBtn: document.getElementById('save-defects-btn'),
+                        saveRemarksBtn: document.getElementById('save-remarks-btn'),
                         loginBtn: document.getElementById('login-btn'),
-                        signOutBtn: document.getElementById('sign-out-btn')
+                        signOutBtn: document.getElementById('sign-out-btn'),
+                        exportPdfBtn: document.getElementById('export-pdf-btn')
                     },
                     labels: { date: document.getElementById('date-label'), conseqAvailLabel: document.getElementById('conseqAvailLabel') },
                     calculated: {
@@ -488,17 +433,18 @@
                     },
                     containers: {
                         loginContainer: document.getElementById('login-container'), mainApp: document.getElementById('main-app'),
-                        myNextFltCompoundGroup: document.getElementById('myNextFlt-compound-group'), acNextUseCompoundGroup: document.getElementById('acNextUse-compound-group'),
-                        etaGroup: document.getElementById('eta-group'), conseqAvailGroup: document.getElementById('conseq-avail-group'),
-                        subRowSpacer: document.getElementById('sub-row-spacer'), reservesGroup: document.getElementById('reserves-group'),
+                        flightDataSection: document.getElementById('flight-data-section'),
+                        reservesGroup: document.getElementById('reserves-group'),
                         fuelGroup: document.querySelector('#fuel').parentElement,
-                        tankerDeltaGroup: document.getElementById('tanker-delta-group')
+                        tankerDeltaGroup: document.getElementById('tanker-delta-group'),
+                        conseqAvailGroup: document.getElementById('conseq-avail-group'),
+                        subRowSpacer: document.getElementById('sub-row-spacer'),
                     },
                     toolbar: { sectorButtons: document.querySelectorAll('.sector-btn'), clearSectorBtn: document.getElementById('clear-sector-btn'), clearAllBtn: document.getElementById('clear-all-btn') },
                     delay: { container: document.getElementById('delay-codes-container'), quickRefContainer: document.getElementById('quick-ref-delays-container') },
                     userIdDisplay: document.getElementById('user-id-display'),
-                    modals: { afir: document.getElementById('afir-modal'), notam: document.getElementById('notam-modal'), defects: document.getElementById('defects-modal') },
-                    textareas: { afir: document.getElementById('afir-textarea'), notam: document.getElementById('notam-textarea'), defects: document.getElementById('defects-textarea') }
+                    modals: { afir: document.getElementById('afir-modal'), notam: document.getElementById('notam-modal'), remarks: document.getElementById('remarks-modal') },
+                    textareas: { afir: document.getElementById('afir-textarea'), notam: document.getElementById('notam-textarea'), remarks: document.getElementById('remarks-textarea') }
                 };
                 
                 const firebaseConfig = {
@@ -533,7 +479,7 @@
                     });
                 } catch (error) {
                     console.error("Firebase Initialization Failed:", error);
-                    alert("Could not connect to the database. Check console for details.");
+                    // Use a custom modal for alerts later if needed
                 }
             });
         }
@@ -542,7 +488,6 @@
             const provider = new GoogleAuthProvider();
             signInWithPopup(auth, provider).catch(error => {
                 console.error("Google Sign-In Failed:", error);
-                alert("Could not sign in with Google. Please check the console for errors.");
             });
         }
 
@@ -576,12 +521,7 @@
                     el.addEventListener('input', (e) => handleInputChange(key, e.target));
                     el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
                     el.addEventListener('focus', (e) => e.target.value = '');
-                    el.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            e.target.blur();
-                        }
-                    });
+                    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
                 }
             });
             ui.labels.date.addEventListener('click', setTomorrowDate);
@@ -592,18 +532,17 @@
             ui.toolbar.clearAllBtn.addEventListener('click', clearAllSectors);
             ui.buttons.loginBtn.addEventListener('click', signInWithGoogle);
             ui.buttons.signOutBtn.addEventListener('click', () => signOut(auth));
+            ui.buttons.exportPdfBtn.addEventListener('click', exportToPdf);
             
             ui.inputs.afir.addEventListener('click', () => openModal('afir'));
             ui.inputs.notam.addEventListener('click', () => openModal('notam'));
-            ui.inputs.defects.addEventListener('click', () => openModal('defects'));
+            ui.inputs.remarks.addEventListener('click', () => openModal('remarks'));
             ui.buttons.saveAfirBtn.addEventListener('click', () => saveAndCloseModal('afir'));
             ui.buttons.saveNotamBtn.addEventListener('click', () => saveAndCloseModal('notam'));
-            ui.buttons.saveDefectsBtn.addEventListener('click', () => saveAndCloseModal('defects'));
+            ui.buttons.saveRemarksBtn.addEventListener('click', () => saveAndCloseModal('remarks'));
 
             Object.values(ui.modals).forEach(modal => {
-                 modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.style.display = 'none';
-                });
+                 modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
             });
         }
     
@@ -643,8 +582,8 @@
                 bw: v => !isNaN(parseInt(v.replace(/,/g, ''))) ? parseInt(v.replace(/,/g, '')).toLocaleString('en-US') : v,
                 bi: v => { const n = parseInt(v); return !isNaN(n) ? (n.toString().length === 3 ? `${Math.floor(n/10)}.${n%10}%` : `${n}%`) : v; },
                 flightLevels: v => v.replace(/(\d{2})/g, '$1/').slice(0, -1),
-                optiClimb1: v => v.length === 6 ? `${v.substring(0,3)}kt/FL${v.substring(3,6)}` : v,
-                optiClimb2: v => v.length === 5 ? `${v.substring(0,3)}kt/M.${v.substring(3,5)}` : v,
+                optiClimb1: v => v.length === 6 ? `${v.substring(0,3)}kt/FL${v.substring(3)}` : v,
+                optiClimb2: v => v.length === 5 ? `${v.substring(0,3)}kt/M.${v.substring(3)}` : v,
                 crzWind: v => v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
                 edto: v => v.length === 12 ? `${v.substring(0,4)}-${v.substring(4,8)} (${v.substring(8,12)})` : (v.length === 8 ? `${v.substring(0,4)}-${v.substring(4,8)}` : v),
                 elev: v => `${parseInt(v) || 0}ft`,
@@ -673,7 +612,7 @@
                 target.value = formattedValue; data[key] = formattedValue; 
             }
             
-            if (['registration', 'bw', 'bi', 'defects'].includes(key)) {
+            if (['registration', 'bw', 'bi', 'remarks'].includes(key)) {
                 const propValue = data[key];
                 if ([0, 2, 4].includes(currentSectorIndex) && currentSectorIndex < 5) {
                     if(flightData[currentSectorIndex + 1]) flightData[currentSectorIndex + 1][key] = propValue;
@@ -715,7 +654,7 @@
                 const el = ui.inputs[key];
                 if (!el) return;
                 let valueToDisplay = data[key] || '';
-                if (el.classList.contains('modal-trigger')) el.value = truncateText(valueToDisplay, 20);
+                if (el.classList.contains('modal-trigger')) el.value = truncateText(valueToDisplay, 40);
                 else if (key === 'crzTemp') el.value = data.crzTemp ? `${data.crzTempSign === 'M' ? '-' : ''}${data.crzTemp}` : '';
                 else el.value = valueToDisplay;
                 if (key === 'date' && data.date) el.placeholder = formatDateForDisplay(data.date);
@@ -735,6 +674,7 @@
             ui.containers.conseqAvailGroup.style.display = isConseqAvailVisible ? 'flex' : 'none';
             ui.containers.subRowSpacer.style.display = isConseqAvailVisible ? 'flex' : 'none';
             ui.containers.subRowSpacer.style.flex = '0.5';
+            ui.containers.flightDataSection.classList.toggle('flight-data-odd-sector', sectorIndex % 2 !== 0);
             updateAllCalculations(); updateActiveSectorButton(); renderDelayCodes(); renderQuickReferenceDelays();
         }
         
@@ -759,7 +699,7 @@
             ui.calculated.pob.textContent = pax > 0 ? (crew + pax) : '';
 
             const altn = parseFloat(data.altn) || 0, thirtyMin = parseFloat(data.thirtyMin) || 0;
-            const reserves = altn + thirtyMin;
+            const reserves = (altn > 0 && thirtyMin > 0) ? altn + thirtyMin : 0;
             ui.calculated.reserves.textContent = reserves > 0 ? reserves.toFixed(1) : '';
             ui.containers.reservesGroup.style.display = (altn > 0 || thirtyMin > 0) ? 'flex' : 'none';
 
@@ -775,7 +715,7 @@
             const azfwDelta = azfw - ezfw2;
             ui.calculated.azfwDelta.textContent = (azfw > 0 && ezfw2 > 0) ? `${azfwDelta >= 0 ? '+' : ''}${azfwDelta.toFixed(1)}` : '';
             
-            const ptow = (fuel + zfwToUse);
+            const ptow = (fuel > 0 && zfwToUse > 0) ? (fuel + zfwToUse) : 0;
             ui.calculated.ptow.textContent = ptow > 0 ? ptow.toFixed(1) : '';
 
             const fpr2 = parseFloat(data.fpr2) || 0;
@@ -787,6 +727,7 @@
 
             const checkLimit = (value, limit, labelEl, valueEl) => {
                 const isExceeded = value >= limit && limit > 0;
+                if (!labelEl || !valueEl) return;
                 labelEl.classList.toggle('limit-exceeded', isExceeded);
                 valueEl.classList.toggle('limit-exceeded', isExceeded);
                 valueEl.parentElement.classList.toggle('limit-exceeded-box', isExceeded);
@@ -851,16 +792,115 @@
         function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
         function toggleCrzTemp() { if (!flightData) return; const newSign = ui.buttons.crzTempToggle.textContent === 'M' ? 'P' : 'M'; ui.buttons.crzTempToggle.textContent = newSign; flightData[currentSectorIndex].crzTempSign = newSign; handleInputBlur('crzTemp', ui.inputs.crzTemp); }
         function toggleConseqAvail() { if (!flightData) return; flightData[currentSectorIndex].conseqAvailStrikethrough = !flightData[currentSectorIndex].conseqAvailStrikethrough; saveAndRecalculate(); }
-        function clearCurrentSector() { if (!flightData) return; if (confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; saveAndRecalculate(); } }
-        function clearAllSectors() { if (!flightData) return; if (confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); saveAndRecalculate(); } }
+        function clearCurrentSector() { if (window.confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; loadDataForSector(currentSectorIndex); saveAndRecalculate(); } }
+        function clearAllSectors() { if (window.confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); loadDataForSector(0); saveAndRecalculate(); } }
         function renderDelayCodes() { ui.delay.container.innerHTML = ''; for (const cat in delayCodes) { const details = document.createElement('details'); details.innerHTML = `<summary>${cat}</summary>`; for (const sub in delayCodes[cat]) { if(sub) details.innerHTML += `<div style="font-weight:bold;margin-top:5px;">${sub}</div>`; for (const code in delayCodes[cat][sub]) { details.innerHTML += `<div class="delay-code-item">${code} - ${delayCodes[cat][sub][code]}</div>`; } } ui.delay.container.appendChild(details); } }
-        function renderQuickReferenceDelays() { ui.delay.quickRefContainer.innerHTML = ''; const codes = ['105', '110', '113', '331', '332', '333', 'PN', 'PU', 'GL']; const all = {}; for(const c in delayCodes) for(const s in delayCodes[c]) for(const code in delayCodes[c][s]) all[code.toUpperCase()] = delayCodes[c][s][code]; codes.forEach(c => { if(all[c]) ui.delay.quickRefContainer.innerHTML += `<div class="delay-code-item">${c} - ${all[c]}</div>`; }); }
-        function createEmptySector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', sid: '', star: '', app: 'ILS', rwy: '', trans: '', elev: '0ft', crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '', optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '', acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', conseqAvailStrikethrough: false, histBurn: '', histCarriage: '', afir: '', notam: '', defects: '' }; }
+        function renderQuickReferenceDelays() { ui.delay.quickRefContainer.innerHTML = ''; const codes = ['PU', 'PN', '113', '112', '331', '332']; const all = {}; for(const c in delayCodes) for(const s in delayCodes[c]) for(const code in delayCodes[c][s]) all[code.toUpperCase()] = delayCodes[c][s][code]; codes.forEach(c => { if(all[c]) ui.delay.quickRefContainer.innerHTML += `<div class="delay-code-item">${c} - ${all[c]}</div>`; }); }
+        function createEmptySector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', sid: '', star: '', app: 'ILS', rwy: '', trans: '', elev: '0ft', crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '', optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '', acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', conseqAvailStrikethrough: false, histBurn: '', histCarriage: '', afir: '', notam: '', remarks: '' }; }
         function openModal(type) { if (!flightData) return; ui.textareas[type].value = flightData[currentSectorIndex][type] || ''; ui.modals[type].style.display = 'block'; ui.textareas[type].focus(); }
-        function saveAndCloseModal(type) { if (!flightData) return; const newText = ui.textareas[type].value; flightData[currentSectorIndex][type] = newText; ui.inputs[type].value = truncateText(newText, 20); ui.modals[type].style.display = 'none'; saveAndRecalculate(); }
+        function saveAndCloseModal(type) { if (!flightData) return; const newText = ui.textareas[type].value; flightData[currentSectorIndex][type] = newText; ui.inputs[type].value = truncateText(newText, 40); ui.modals[type].style.display = 'none'; saveAndRecalculate(); }
         function truncateText(text, length) { if (!text) return ''; return text.length <= length ? text : text.substring(0, length) + '...'; }
+
+        function exportToPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+            
+            const sectorsWithData = flightData.filter(s => s && s.flightNumber);
+            if (sectorsWithData.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            let yPos = 30;
+            const leftMargin = 20;
+            const rightMargin = 20;
+            const pageW = doc.internal.pageSize.getWidth();
+            const colWidth = (pageW - leftMargin - rightMargin) / 4;
+            const fontSize = 8;
+            const titleFontSize = 12;
+            doc.setFontSize(titleFontSize);
+
+            doc.text("Flight Log Summary", pageW / 2, yPos, { align: 'center' });
+            yPos += titleFontSize * 2;
+            doc.setFontSize(fontSize);
+
+            sectorsWithData.forEach((sector, index) => {
+                doc.setFont('helvetica', 'bold');
+                doc.text(`SECTOR ${index + 1}: ${sector.flightNumber} (${sector.from}-${sector.to})`, leftMargin, yPos);
+                yPos += fontSize * 1.5;
+                doc.setFont('helvetica', 'normal');
+
+                const printLine = (label, value, col = 0) => {
+                    if (value) {
+                       doc.text(`${label}: ${value}`, leftMargin + (col * colWidth), yPos);
+                    }
+                };
+                
+                printLine("DATE", formatDateForDisplay(sector.date), 0);
+                printLine("REG", sector.registration, 1);
+                printLine("CIC", sector.cic, 2);
+                printLine("FO", sector.fo, 3);
+                yPos += fontSize * 1.2;
+                
+                printLine("RPT", sector.report, 0);
+                printLine("DEP GATE", sector.depGate, 1);
+                printLine("ARR GATE", sector.arrGate, 2);
+                yPos += fontSize * 1.5;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text("Timings", leftMargin, yPos);
+                yPos += fontSize * 1.2;
+                doc.setFont('helvetica', 'normal');
+
+                printLine("STD", `${sector.std} (${calculateLocalTime(sector.std, sector.fromTz)})`, 0);
+                printLine("STA", `${sector.sta} (${calculateLocalTime(sector.sta, sector.toTz)})`, 1);
+                printLine("OUT", sector.out, 2);
+                printLine("IN", sector.in, 3);
+                yPos += fontSize * 1.2;
+                printLine("OFF", sector.off, 2);
+                printLine("ON", sector.on, 3);
+                yPos += fontSize * 1.5;
+
+                doc.setFont('helvetica', 'bold');
+                doc.text("Flight Plan", leftMargin, yPos);
+                yPos += fontSize * 1.2;
+                doc.setFont('helvetica', 'normal');
+
+                printLine("AZFW", sector.azfw, 0);
+                printLine("PTOW", (parseFloat(sector.fuel || 0) + (parseFloat(sector.azfw || 0))).toFixed(1), 1);
+                printLine("PLW", (parseFloat(sector.fuel || 0) - parseFloat(sector.burn || 0) - 0.3 + parseFloat(sector.azfw || 0)).toFixed(1), 2);
+                yPos += fontSize * 1.2;
+                printLine("FUEL", sector.fuel, 0);
+                printLine("BURN", sector.burn, 1);
+                printLine("RESERVES", (parseFloat(sector.altn || 0) + parseFloat(sector.thirtyMin || 0)).toFixed(1), 2);
+                yPos += fontSize * 1.2;
+                printLine("PAX", sector.pax, 0);
+                printLine("POB", (parseInt(sector.crew || 0) + parseInt(sector.pax || 0)), 1);
+
+                if (sector.remarks) {
+                    yPos += fontSize * 1.5;
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("Remarks", leftMargin, yPos);
+                    yPos += fontSize * 1.2;
+                    doc.setFont('helvetica', 'normal');
+                    const remarksLines = doc.splitTextToSize(sector.remarks, pageW - leftMargin - rightMargin);
+                    doc.text(remarksLines, leftMargin, yPos);
+                    yPos += (remarksLines.length * fontSize * 1.2);
+                }
+
+                yPos += fontSize * 2; // Space between sectors
+                if (yPos > doc.internal.pageSize.getHeight() - 40) {
+                     yPos = 30; // Reset for next page if needed, though goal is one page
+                }
+            });
+
+            const firstSector = sectorsWithData[0];
+            const filename = `${firstSector.date}-${firstSector.flightNumber}.pdf`;
+            doc.save(filename);
+        }
 
         runAppLogic();
     </script>
 </body>
 </html>
+
