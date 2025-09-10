@@ -57,7 +57,7 @@
             padding: 5px 5px 80px 5px;
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 5px;
         }
 
         .data-section {
@@ -176,12 +176,6 @@
         #remarks-group { grid-column: 1 / -1; }
         .limit-exceeded { color: var(--red-color) !important; }
         .limit-exceeded-box { border: 1px solid var(--red-color); border-radius: 8px; }
-        .horizontal-limits {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-        }
         .temp-toggle { height: 24px; width: 24px; font-size: 12px; background-color: transparent; border: none; color: var(--text-color); border-radius: 4px; margin-right: 2px; }
 
         /* --- Toolbar & Modals --- */
@@ -199,12 +193,14 @@
             padding: 4px 8px; border-radius: 8px;
             font-size: 11px; z-index: 101;
         }
-        .sector-buttons, .action-buttons { display: flex; gap: 4px; }
+        .sector-buttons { display: flex; gap: 4px; flex-grow: 1; }
+        .action-buttons { display: flex; gap: 4px; }
         #toolbar button {
             background-color: var(--button-bg); color: var(--text-color);
             border: none; padding: 8px 12px; border-radius: 8px;
             font-size: clamp(12px, 3vw, 14px); font-weight: 600; cursor: pointer;
         }
+        .sector-buttons button { flex-grow: 1; }
         #toolbar button.active { background-color: var(--focus-color); color: white; }
         #sign-out-btn { background-color: var(--red-color); }
         #export-pdf-btn { background-color: var(--green-color); }
@@ -212,7 +208,7 @@
         /* --- Delay Section --- */
         #delay-codes-container details { margin-top: 10px; }
         #delay-codes-container summary { font-weight: bold; cursor: pointer; }
-        .delay-code-item { padding: 2px 0 2px 15px; font-size: clamp(11px, 2.5vw, 13px); }
+        .delay-code-item { padding: 2px 0 2px 15px; font-size: clamp(11px, 2.5vw, 13px); text-align: left; }
         #quick-ref-container { width: 100%; margin-bottom: 10px; }
         #quick-ref-delays-container {
             display: grid;
@@ -306,16 +302,11 @@
                 <h2 class="section-title">FLIGHT PLANNING</h2>
                 <div class="field-group"><label for="ezfw1">EZFW 1</label><input type="text" id="ezfw1" class="field-value" inputmode="decimal"></div>
                 <div class="field-group"><label for="ezfw2">EZFW 2</label><input type="text" id="ezfw2" class="field-value" inputmode="decimal"><div id="ezfwDelta" class="sub-field-value"></div></div>
-                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="decimal"><div id="azfwDelta" class="sub-field-value"></div><div id="mzfw" class="sub-field-value"></div></div>
                 <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="decimal"></div>
-                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div></div>
-                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div></div>
-                <div class="horizontal-limits">
-                    <div id="mzfw" class="sub-field-value"></div>
-                    <div id="mtow" class="sub-field-value"></div>
-                    <div id="mlw" class="sub-field-value"></div>
-                </div>
-
+                <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div><div id="mtow" class="sub-field-value"></div></div>
+                <div class="field-group"><label for="plw">PLW</label><div id="plw" class="calculated"></div><div id="mlw" class="sub-field-value"></div></div>
+                
                 <div class="field-group"><label for="sid">SID</label><input type="text" id="sid" class="field-value"></div>
                 <div class="field-group"><label for="app">APP</label><select id="app" class="field-value"><option>ILS</option><option>RNP</option><option>VOR</option></select></div>
                 <div class="field-group"><label for="rwy">RWY</label><input type="text" id="rwy" class="field-value" inputmode="text" maxlength="3"></div>
@@ -617,13 +608,15 @@
                 if (rawValue.length > 0) {
                      const formattedValue = `SQ${rawValue}`;
                      target.value = formattedValue; data[key] = formattedValue;
-                     if (flightNumberRoutes[rawValue]) {
-                         const route = flightNumberRoutes[rawValue];
+                     const route = flightNumberRoutes[rawValue];
+                     if (route) {
                          if (key === 'flightNumber') {
                              data.from = route.from; data.to = route.to;
                              ui.inputs.from.value = route.from; ui.inputs.to.value = route.to;
                              handleInputBlur('from', ui.inputs.from); handleInputBlur('to', ui.inputs.to);
                          } else { data.acNextUseFrom = route.from; data.acNextUseTo = route.to; }
+                     } else {
+                         if (key === 'acNextUseFn') { data.acNextUseFrom = ''; data.acNextUseTo = ''; }
                      }
                 }
             } else {
@@ -649,7 +642,8 @@
             if (['from', 'to'].includes(key)) {
                 const iata = value.toUpperCase();
                 const tz = iataTimezones[iata] || '';
-                ui.inputs[`${key}Tz`].value = tz; ui.inputs[`${key}Tz`].style.display = (iata === 'SIN') ? 'none' : 'block';
+                ui.inputs[`${key}Tz`].value = tz; 
+                ui.inputs[`${key}Tz`].style.display = (iata === 'SIN') ? 'none' : 'block';
                 data[`${key}Tz`] = tz;
                 if ([0,2,4].includes(currentSectorIndex) && currentSectorIndex < 5) {
                     if (key === 'from' && flightData[currentSectorIndex+1]) flightData[currentSectorIndex + 1].to = iata;
@@ -700,7 +694,7 @@
             updateAllCalculations(); updateActiveSectorButton(); renderDelayCodes(); renderQuickReferenceDelays();
         }
         
-        function switchSector(sectorIndex) { currentSectorIndex = sectorIndex; saveToFirestore(); loadDataForSector(currentSectorIndex); }
+        function switchSector(sectorIndex) { currentSectorIndex = sectorIndex; loadDataForSector(currentSectorIndex); }
         function getAircraftType() { if (!flightData || !flightData[currentSectorIndex]) return null; const reg = (flightData[currentSectorIndex].registration || '').toUpperCase().replace('9V-', ''); if (reg.length >= 2) { if (reg.charAt(1) === 'B') return 'MAX'; if (reg.charAt(1) === 'G') return 'NG'; } return null; }
         
         function updateAllCalculations() {
@@ -712,7 +706,14 @@
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : { MZFW: 0, MTOW: 0, MLW: 0, PLW: 0, EGT: '-' };
             
+            const azfw = parseFloat(data.azfw) || 0;
+            const ezfw2 = parseFloat(data.ezfw2) || 0;
+            const ezfw1 = parseFloat(data.ezfw1) || 0;
+            const showMzfwUnder = azfw ? 'azfw' : (ezfw2 ? 'ezfw2' : 'ezfw1');
+            
             ui.calculated.mzfw.textContent = aircraftType ? `MZFW: ${limits.MZFW.toFixed(1)}` : '';
+            if(ui.inputs[showMzfwUnder]) ui.inputs[showMzfwUnder].parentElement.appendChild(ui.calculated.mzfw);
+            
             ui.calculated.mtow.textContent = aircraftType ? `MTOW: ${limits.MTOW.toFixed(1)}` : '';
             ui.calculated.mlw.textContent = aircraftType ? `MLW: ${limits.MLW.toFixed(1)}` : '';
             ui.calculated.egt.textContent = limits.EGT;
@@ -726,7 +727,6 @@
             ui.containers.reservesGroup.style.display = (altn > 0 || thirtyMin > 0) ? 'flex' : 'none';
 
             const fuel = parseFloat(data.fuel) || 0, burn = parseFloat(data.burn) || 0;
-            const azfw = parseFloat(data.azfw) || 0, ezfw2 = parseFloat(data.ezfw2) || 0, ezfw1 = parseFloat(data.ezfw1) || 0;
             
             const zfwToUse = azfw || ezfw2 || ezfw1;
             const plw = zfwToUse > 0 ? fuel - burn - 0.3 + zfwToUse : 0;
@@ -757,8 +757,8 @@
             
             if (aircraftType) {
                 const limits = aircraftLimits[aircraftType];
-                checkLimit(ptow, aircraftType === 'MAX' ? 82.2 : 79.1, ui.inputs.ptow.previousElementSibling, ui.calculated.ptow);
-                checkLimit(plw, aircraftType === 'MAX' ? 68.4 : 65.4, ui.inputs.plw.previousElementSibling, ui.calculated.plw);
+                checkLimit(ptow, aircraftType === 'MAX' ? 82.2 : 79.1, ui.calculated.ptow.previousElementSibling, ui.calculated.ptow);
+                checkLimit(plw, aircraftType === 'MAX' ? 68.4 : 65.4, ui.calculated.plw.previousElementSibling, ui.calculated.plw);
                 checkLimit(ezfw1, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.ezfw1.previousElementSibling, ui.inputs.ezfw1);
                 checkLimit(ezfw2, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.ezfw2.previousElementSibling, ui.inputs.ezfw2);
                 checkLimit(azfw, aircraftType === 'MAX' ? 66.0 : 62.8, ui.inputs.azfw.previousElementSibling, ui.inputs.azfw);
@@ -775,8 +775,8 @@
             } else { ui.calculated.myNextFlt.textContent = ''; ui.calculated.gndTimeAvail.textContent = ''; }
             
             ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
-            const gndTimeForAcMins = calculateTimeDifference(data.eta, calculateTime(data.acNextUseStd, -60));
-            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gMins%60}m` : '';
+            const gndTimeForAcMins = calculateTimeDifference(data.eta, data.acNextUseStd);
+            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
             
             if (prevSectorData) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `+${prevAaa}m` : '';
             } else { ui.calculated.conseqAvail.textContent = ''; }
@@ -810,6 +810,7 @@
             if (!dStr) return '';
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+            // Using UTC methods to avoid timezone discrepancies from the user's system
             const d = new Date(dStr + 'T00:00:00Z');
             const dayOfMonth = d.getUTCDate().toString().padStart(2, '0');
             const month = months[d.getUTCMonth()];
@@ -819,12 +820,12 @@
         function setTomorrowDate() { const t = new Date(); t.setUTCDate(t.getUTCDate() + 1); const y = t.getUTCFullYear(), m = (t.getUTCMonth()+1).toString().padStart(2,'0'), d = t.getUTCDate().toString().padStart(2,'0'); ui.inputs.date.value = `${y}-${m}-${d}`; handleInputBlur('date', ui.inputs.date); }
         function setFieldText(el, text, color = null) { el.textContent = text; el.style.color = color ? `var(--${color}-color)` : ''; }
         function updateActiveSectorButton() { ui.toolbar.sectorButtons.forEach((btn, i) => btn.classList.toggle('active', i === currentSectorIndex)); }
-        function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => flightData[i].report = rpt); } } }
+        function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => { if (flightData[i]) flightData[i].report = rpt; }); } } }
         function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
         function toggleCrzTemp() { if (!flightData) return; const newSign = ui.buttons.crzTempToggle.textContent === 'M' ? 'P' : 'M'; ui.buttons.crzTempToggle.textContent = newSign; flightData[currentSectorIndex].crzTempSign = newSign; handleInputBlur('crzTemp', ui.inputs.crzTemp); }
         function toggleConseqAvail() { if (!flightData) return; flightData[currentSectorIndex].conseqAvailStrikethrough = !flightData[currentSectorIndex].conseqAvailStrikethrough; saveAndRecalculate(); }
         function clearCurrentSector() { if (window.confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; loadDataForSector(currentSectorIndex); saveAndRecalculate(); } }
-        function clearAllSectors() { if (window.confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); loadDataForSector(0); saveAndRecalculate(); } }
+        function clearAllSectors() { if (window.confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); currentSectorIndex=0; loadDataForSector(0); saveAndRecalculate(); } }
         function renderDelayCodes() { ui.delay.container.innerHTML = ''; for (const cat in delayCodes) { const details = document.createElement('details'); details.innerHTML = `<summary>${cat}</summary>`; for (const sub in delayCodes[cat]) { if(sub) details.innerHTML += `<div style="font-weight:bold;margin-top:5px;">${sub}</div>`; for (const code in delayCodes[cat][sub]) { details.innerHTML += `<div class="delay-code-item">${code} - ${delayCodes[cat][sub][code]}</div>`; } } ui.delay.container.appendChild(details); } }
         function renderQuickReferenceDelays() { ui.delay.quickRefContainer.innerHTML = ''; const codes = ['PU', 'PN', '113', '112', '331', '332']; const all = {}; for(const c in delayCodes) for(const s in delayCodes[c]) for(const code in delayCodes[c][s]) all[code.toUpperCase()] = delayCodes[c][s][code]; codes.forEach(c => { if(all[c]) ui.delay.quickRefContainer.innerHTML += `<div class="delay-code-item">${c} - ${all[c]}</div>`; }); }
         function createEmptySector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', sid: '', star: '', app: 'ILS', rwy: '', trans: '', elev: '0ft', crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '', optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '', acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', conseqAvailStrikethrough: false, histBurn: '', histCarriage: '', afir: '', notam: '', remarks: '' }; }
