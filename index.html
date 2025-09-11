@@ -30,7 +30,7 @@
         }
 
         #login-container {
-            display: flex;
+            display: none; /* Hidden by default to show app in canvas */
             flex-direction: column;
             justify-content: center;
             align-items: center;
@@ -50,7 +50,7 @@
         }
         
         #main-app {
-            display: none; /* Hidden by default */
+            display: block; /* Shown by default */
         }
 
         #app-container {
@@ -91,17 +91,26 @@
         
         label {
             font-size: clamp(9px, 2.2vw, 11px);
-            margin-bottom: 0;
+            margin-bottom: 2px;
             color: var(--text-color); text-transform: uppercase;
             font-weight: 500; cursor: default;
-            line-height: 1.1;
-            white-space: nowrap;
+            line-height: 1.2;
+            min-height: 2.4em; /* Allow space for 2 lines */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .field-group {
             flex: 1; display: flex; flex-direction: column;
             align-items: center; text-align: center;
             min-width: 0; padding: 0 1px;
+        }
+
+        .flight-data-row, .timings-row, .timings-sub-row {
+            display: flex;
+            width: 100%;
+            align-items: flex-start; /* Align groups to the top */
         }
         
         .field-value, .calculated, select.field-value {
@@ -147,7 +156,7 @@
 
         /* --- Section 2: Timings --- */
         .timings-section { flex-direction: column; gap: 0; padding-bottom: 5px; }
-        .timings-row, .timings-sub-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        .timings-row, .timings-sub-row { justify-content: space-between; align-items: center; }
         .timings-row { align-items: flex-start; }
         .timings-sub-row { font-size: 12px; min-height: 20px; }
         .local-time { margin-top: -4px; }
@@ -169,7 +178,7 @@
             grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
             gap: 8px 5px; width: 100%; align-items: start;
         }
-        .flight-planning-section label { height: 11px; }
+        .flight-planning-section label { height: auto; } /* Let height be determined by min-height */
         .flight-planning-section .field-value, .flight-planning-section .calculated, .flight-planning-section select.field-value {
             height: 24px; font-size: clamp(11px, 3vw, 14px);
         }
@@ -194,11 +203,12 @@
             font-size: 11px; z-index: 101;
         }
         .sector-buttons { display: flex; gap: 4px; flex-grow: 1; }
-        .action-buttons { display: flex; gap: 4px; }
+        .action-buttons { display: flex; gap: 4px; flex-shrink: 0; }
         #toolbar button {
             background-color: var(--button-bg); color: var(--text-color);
             border: none; padding: 8px 12px; border-radius: 8px;
             font-size: clamp(12px, 3vw, 14px); font-weight: 600; cursor: pointer;
+            white-space: nowrap;
         }
         .sector-buttons button { flex-grow: 1; }
         #toolbar button.active { background-color: var(--focus-color); color: white; }
@@ -218,7 +228,6 @@
         #quick-ref-title { margin: 0 0 5px 0; font-size: clamp(12px, 2.8vw, 14px); text-align: center; }
 
         .modal-textarea { width: calc(100% - 10px); height: 150px; background-color: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 14px; padding: 5px; }
-        /* Other modal styles from original file remain */
         .modal { display: none; position: fixed; z-index: 200; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); color: var(--text-color); }
         .modal-content { background-color: var(--toolbar-bg); margin: 15% auto; padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; width: 80%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
         .modal-content button { background-color: var(--focus-color); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -242,8 +251,8 @@
                 <div class="data-section-content">
                     <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
                     <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder="" onfocus="(this.type='date')" onblur="(this.type='text')"></div>
-                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" placeholder="UTC"></div></div>
-                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" placeholder="UTC"></div></div>
+                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" readonly></div></div>
+                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" readonly></div></div>
                     <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
                     <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
                     <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
@@ -355,7 +364,7 @@
             </section>
 
             <!-- SECTION 4: DELAY ATTRIBUTION -->
-            <section class="data-section">
+            <section class="data-section" style="flex-direction: column;">
                 <h2 class="section-title">DELAY ATTRIBUTION</h2>
                  <div id="quick-ref-container">
                     <h3 id="quick-ref-title">QUICK REFERENCE DELAYS</h3>
@@ -492,7 +501,6 @@
                     });
                 } catch (error) {
                     console.error("Firebase Initialization Failed:", error);
-                    // Use a custom modal for alerts later if needed
                 }
             });
         }
@@ -533,7 +541,11 @@
                 if (el && !el.classList.contains('modal-trigger')) {
                     el.addEventListener('input', (e) => handleInputChange(key, e.target));
                     el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
-                    el.addEventListener('focus', (e) => e.target.value = '');
+                    el.addEventListener('focus', (e) => {
+                        if (e.target.type !== 'date') {
+                           e.target.value = '';
+                        }
+                    });
                     el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
                 }
             });
@@ -562,14 +574,17 @@
         function handleInputChange(key, target) {
             if (!flightData) return;
             let value = target.value;
-            flightData[currentSectorIndex][key] = value;
-            if (['from', 'to', 'registration', 'edto', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy'].includes(key)) {
-                target.value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-                flightData[currentSectorIndex][key] = target.value;
-            } else if (['cic', 'fo'].includes(key)) {
-                 target.value = value.toUpperCase();
-                 flightData[currentSectorIndex][key] = target.value;
+            // For date, we want to store the raw YYYY-MM-DD value
+            if (key !== 'date') {
+                if (['from', 'to', 'registration', 'edto', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy'].includes(key)) {
+                    value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                } else if (['cic', 'fo'].includes(key)) {
+                     value = value.toUpperCase();
+                }
+                target.value = value;
             }
+             flightData[currentSectorIndex][key] = value;
+            
             switch (key) {
                 case 'registration': if (value.length === 3) target.blur(); break;
                 case 'flightNumber': case 'acNextUseFn': if (value.length >= 3) target.blur(); break;
@@ -578,7 +593,7 @@
                 case 'taxi': if (target.value.length === 5) ui.inputs.off.focus(); break;
                 case 'pax': if (value.length === 3) target.blur(); break;
             }
-            if (['cic', 'fo'].includes(key)) propagateValueToFutureSectors(key, target.value);
+            if (['cic', 'fo'].includes(key)) propagateValueToFutureSectors(key, value);
             if (target.classList.contains('time-input')) formatTimeInput(target);
             saveAndRecalculate();
         }
@@ -588,6 +603,15 @@
             let value = target.value;
             const data = flightData[currentSectorIndex];
             
+            if (key === 'date' && value) {
+                data.date = value; // Store YYYY-MM-DD
+                target.placeholder = formatDateForDisplay(value);
+                target.value = ''; // Clear value to show placeholder
+                propagateValueToFutureSectors(key, value);
+                saveAndRecalculate();
+                return;
+            }
+
             const formatters = {
                 registration: v => v.length === 3 ? `9V-${v}` : v,
                 time: v => { const m = timeToMinutes(v.replace(':', '')); return m !== null ? minutesToHHMM(m) : v; },
@@ -638,7 +662,6 @@
                 }
             }
 
-            if (key === 'date' && value) { target.placeholder = formatDateForDisplay(value); propagateValueToFutureSectors(key, value); }
             if (['from', 'to'].includes(key)) {
                 const iata = value.toUpperCase();
                 const tz = iataTimezones[iata] || '';
@@ -646,8 +669,8 @@
                 ui.inputs[`${key}Tz`].style.display = (iata === 'SIN') ? 'none' : 'block';
                 data[`${key}Tz`] = tz;
                 if ([0,2,4].includes(currentSectorIndex) && currentSectorIndex < 5) {
-                    if (key === 'from' && flightData[currentSectorIndex+1]) flightData[currentSectorIndex + 1].to = iata;
-                    if (key === 'to' && flightData[currentSectorIndex+1]) flightData[currentSectorIndex + 1].from = iata;
+                    if (key === 'from' && flightData[currentSectorIndex+1]) { flightData[currentSectorIndex + 1].to = iata; }
+                    if (key === 'to' && flightData[currentSectorIndex+1]) { flightData[currentSectorIndex + 1].from = iata; }
                 }
             }
             if(key === 'crew') target.readOnly = true;
@@ -669,16 +692,27 @@
             Object.keys(ui.inputs).forEach(key => {
                 const el = ui.inputs[key];
                 if (!el) return;
-                let valueToDisplay = data[key] || '';
-                if (el.classList.contains('modal-trigger')) el.value = truncateText(valueToDisplay, 40);
-                else if (key === 'crzTemp') el.value = data.crzTemp ? `${data.crzTempSign === 'M' ? '-' : ''}${data.crzTemp}` : '';
-                else el.value = valueToDisplay;
-                if (key === 'date' && data.date) el.placeholder = formatDateForDisplay(data.date);
-                else if (key === 'date') el.placeholder = '';
+                
+                if (key === 'date') {
+                    el.value = ''; // Always clear value to show placeholder
+                    el.placeholder = formatDateForDisplay(data.date);
+                } else if (el.classList.contains('modal-trigger')) {
+                    el.value = truncateText(data[key] || '', 40);
+                } else if (key === 'crzTemp') {
+                    el.value = data.crzTemp ? `${data.crzTempSign === 'M' ? '-' : ''}${data.crzTemp}` : '';
+                } else {
+                    el.value = data[key] || '';
+                }
+
                 if (key === 'crew' && data.crew) el.readOnly = true;
                 else if (key === 'crew') { el.readOnly = false; el.value = '8'; data.crew = '8'; }
+
                 if (key === 'elev' && !data.elev) { el.value = '0ft'; data.elev = '0ft'; }
-                if (key === 'fromTz' || key === 'toTz') { const iataKey = key.substring(0,2); el.style.display = (data[iataKey] === 'SIN') ? 'none' : 'block'; }
+                
+                if (key === 'fromTz' || key === 'toTz') { 
+                    const iataKey = key.substring(0, key.length - 2); // 'from' or 'to'
+                    el.style.display = (data[iataKey] === 'SIN') ? 'none' : 'block'; 
+                }
             });
             if ([1,3,5].includes(sectorIndex)) {
                 const prevData = flightData[sectorIndex - 1];
@@ -776,7 +810,7 @@
             
             ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
             const gndTimeForAcMins = calculateTimeDifference(data.eta, data.acNextUseStd);
-            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
+            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gMins%60}m` : '';
             
             if (prevSectorData) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `+${prevAaa}m` : '';
             } else { ui.calculated.conseqAvail.textContent = ''; }
@@ -810,18 +844,24 @@
             if (!dStr) return '';
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
             const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-            // Using UTC methods to avoid timezone discrepancies from the user's system
             const d = new Date(dStr + 'T00:00:00Z');
             const dayOfMonth = d.getUTCDate().toString().padStart(2, '0');
             const month = months[d.getUTCMonth()];
             const dayOfWeek = days[d.getUTCDay()];
             return `${dayOfMonth} ${month} ${dayOfWeek}`;
         }
-        function setTomorrowDate() { const t = new Date(); t.setUTCDate(t.getUTCDate() + 1); const y = t.getUTCFullYear(), m = (t.getUTCMonth()+1).toString().padStart(2,'0'), d = t.getUTCDate().toString().padStart(2,'0'); ui.inputs.date.value = `${y}-${m}-${d}`; handleInputBlur('date', ui.inputs.date); }
+        function setTomorrowDate() { 
+            const t = new Date(); 
+            t.setUTCDate(t.getUTCDate() + 1); 
+            const y = t.getUTCFullYear(), m = (t.getUTCMonth()+1).toString().padStart(2,'0'), d = t.getUTCDate().toString().padStart(2,'0'); 
+            const dateValue = `${y}-${m}-${d}`;
+            ui.inputs.date.value = dateValue; // Temporarily set value for blur handler
+            handleInputBlur('date', ui.inputs.date); // Call blur handler to format and save
+        }
         function setFieldText(el, text, color = null) { el.textContent = text; el.style.color = color ? `var(--${color}-color)` : ''; }
         function updateActiveSectorButton() { ui.toolbar.sectorButtons.forEach((btn, i) => btn.classList.toggle('active', i === currentSectorIndex)); }
         function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => { if (flightData[i]) flightData[i].report = rpt; }); } } }
-        function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
+        function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex + 1; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
         function toggleCrzTemp() { if (!flightData) return; const newSign = ui.buttons.crzTempToggle.textContent === 'M' ? 'P' : 'M'; ui.buttons.crzTempToggle.textContent = newSign; flightData[currentSectorIndex].crzTempSign = newSign; handleInputBlur('crzTemp', ui.inputs.crzTemp); }
         function toggleConseqAvail() { if (!flightData) return; flightData[currentSectorIndex].conseqAvailStrikethrough = !flightData[currentSectorIndex].conseqAvailStrikethrough; saveAndRecalculate(); }
         function clearCurrentSector() { if (window.confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; loadDataForSector(currentSectorIndex); saveAndRecalculate(); } }
