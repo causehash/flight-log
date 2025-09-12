@@ -68,7 +68,6 @@
             padding: 15px 10px 10px 10px;
             display: flex;
             flex-wrap: wrap;
-            justify-content: space-around;
             align-items: flex-start;
             position: relative;
             margin-top: 5px;
@@ -93,7 +92,7 @@
         
         label {
             font-size: clamp(9px, 2.2vw, 11px);
-            margin-bottom: 2px;
+            margin-bottom: 0;
             color: var(--text-color); text-transform: uppercase;
             font-weight: 500; cursor: default;
             line-height: 1.2;
@@ -125,11 +124,11 @@
         .sub-field-value { padding: 0; min-height: 1em; line-height: 1; font-size: clamp(9px, 2vw, 11px); color: var(--subtle-text-color); }
 
         /* --- Section 1: Flight Data --- */
-        .flight-data-section .data-section-content { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100%; gap: 5px 2px; }
+        .flight-data-section .data-section-content { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100%; gap: 2px; }
         .flight-data-section .field-group { flex: 1 1 65px; min-width: 60px; }
         @media (min-width: 768px) { .flight-data-section .data-section-content { flex-wrap: nowrap; } }
-        .input-with-tz { position: relative; width: 100%; display: flex; justify-content: center; align-items: center; }
-        .timezone-input { position: absolute; top: 50%; transform: translateY(-50%); right: 1px; width: 30px; font-size: 9px; background-color: transparent; border: none; color: var(--subtle-text-color); text-align: center; padding: 1px; }
+        .input-with-tz { display: flex; flex-direction: column-reverse; align-items: center; width: 100%;}
+        .timezone-input { font-size: 9px; color: var(--subtle-text-color); height: 11px;}
 
         /* --- Section 2: Timings --- */
         .timings-section { flex-direction: column; gap: 0; padding-bottom: 5px; }
@@ -138,7 +137,8 @@
         .timings-sub-row { font-size: 12px; min-height: 20px; }
         .local-time { margin-top: -4px; vertical-align: middle; }
         .main-time-field { font-size: clamp(16px, 4vw, 20px); font-weight: 700; }
-        .timings-sub-row .field-group { min-height: 24px; }
+        #blk.main-time-field { font-size: clamp(16px, 4vw, 20px) !important; font-weight: 700 !important; }
+        .timings-sub-row .field-group { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; min-height: 24px; }
         #conseq-avail-group { font-size: 10px; color: var(--subtle-text-color); }
         .timings-turnaround-row { border-top: 1px solid var(--border-color); margin-top: 5px; padding-top: 5px; display: grid; grid-template-columns: repeat(auto-fit, minmax(65px, 1fr)); width: 100%; gap: 5px; }
         #myNextFlt-group .calculated, #acNextUse-group .calculated { display: flex; flex-direction: column; }
@@ -151,8 +151,7 @@
         .input-with-toggle { display: flex; align-items: center; justify-content: center; width:100%;}
         .temp-toggle { height: 24px; width: 24px; font-size: 12px; background-color: transparent; border: none; color: var(--text-color); border-radius: 4px; padding: 0; flex-shrink: 0; }
         #crzTemp { flex-grow: 1; }
-        .opti-climb-value { font-size: clamp(9px, 2.5vw, 12px); word-break: break-all; white-space: normal; line-height: 1.1; }
-        .edto-value { white-space: normal; word-break: break-all; font-size: clamp(11px, 2.8vw, 13px); }
+        .shrink-to-fit { font-size: clamp(9px, 2.5vw, 12px); word-break: break-all; white-space: normal; line-height: 1.1; }
         .wide-field-group { grid-column: span 2; }
         #remarks-group, #defects-group { grid-column: 1 / -1; }
         #reserves-group.boxed { border: 1px solid var(--border-color); border-radius: 8px; padding: 2px 0; }
@@ -200,10 +199,10 @@
                 <div class="data-section-content">
                     <div class="field-group"><label for="flightNumber">FLT NO.</label><input type="text" id="flightNumber" class="field-value" inputmode="numeric"></div>
                     <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder=""></div>
-                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="from-tz" class="timezone-input" readonly></div></div>
-                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"><input type="text" id="to-tz" class="timezone-input" readonly></div></div>
-                    <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value" autocapitalize="characters"></div>
-                    <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value" autocapitalize="characters"></div>
+                    <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from-tz" class="timezone-input" readonly><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"></div></div>
+                    <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to-tz" class="timezone-input" readonly><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"></div></div>
+                    <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value shrink-to-fit" autocapitalize="characters"></div>
+                    <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value shrink-to-fit" autocapitalize="characters"></div>
                     <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
                     <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
                     <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
@@ -230,7 +229,7 @@
                 <div class="timings-row">
                     <div class="field-group"><label for="std">SCHEDULED OUT</label><input type="text" id="std" class="field-value time-input main-time-field" inputmode="numeric"></div>
                     <div class="field-group"><label for="eft">FLIGHT TIME</label><input type="text" id="eft" class="field-value time-input main-time-field" inputmode="numeric"></div>
-                    <div class="field-group"><label>BLOCK</label><div id="blk" class="field-value calculated"></div></div>
+                    <div class="field-group"><label>BLOCK</label><div id="blk" class="field-value calculated main-time-field"></div></div>
                     <div class="field-group"><label for="sta">SCHEDULED IN</label><input type="text" id="sta" class="field-value time-input main-time-field" inputmode="numeric"></div>
                 </div>
                 <div class="timings-sub-row">
@@ -285,12 +284,12 @@
                 <div class="field-group" id="tanker-delta-group"><label>TANKER DELTA</label><div id="tankerDelta" class="calculated"></div></div>
                 <div class="field-group"><label for="turb">TURB</label><input type="text" id="turb" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="terr">TERR</label><input type="text" id="terr" class="field-value" inputmode="numeric"></div>
-                <div class="field-group"><label for="flightLevels">FLs</label><input type="text" id="flightLevels" class="field-value" inputmode="numeric"></div>
-                <div class="field-group"><label for="optiClimb1">Opti Climb 1</label><input id="optiClimb1" class="field-value opti-climb-value" inputmode="numeric"></div>
-                <div class="field-group"><label for="optiClimb2">Opti Climb 2</label><input id="optiClimb2" class="field-value opti-climb-value" inputmode="numeric"></div>
+                <div class="field-group"><label for="flightLevels">FL</label><input type="text" id="flightLevels" class="field-value" inputmode="numeric"></div>
+                <div class="field-group"><label for="optiClimb1">Opti Climb 1</label><input type="text" id="optiClimb1" class="field-value shrink-to-fit" inputmode="numeric"></div>
+                <div class="field-group"><label for="optiClimb2">Opti Climb 2</label><input type="text" id="optiClimb2" class="field-value shrink-to-fit" inputmode="numeric"></div>
                 <div class="field-group">
                     <label for="crzWind">CRZ WIND</label>
-                    <input type="text" id="crzWind" class="field-value" inputmode="numeric">
+                    <input type="text" id="crzWind" class="field-value shrink-to-fit" inputmode="numeric">
                 </div>
                 <div class="field-group">
                     <label for="crzTemp">CRZ TEMP</label>
@@ -299,11 +298,11 @@
                         <input type="text" id="crzTemp" class="field-value" inputmode="numeric" maxlength="2">
                     </div>
                 </div>
-                <div class="field-group" style="grid-column: span 2;"><label for="edto">EDTO</label><div id="edto" class="calculated edto-value"></div></div>
+                <div class="field-group" style="grid-column: span 2;"><label for="edto">EDTO</label><input type="text" id="edto" class="field-value shrink-to-fit"></div>
                  <div class="field-group wide-field-group"><label for="afir">AFIR</label><input type="text" id="afir" class="field-value modal-trigger" readonly></div>
                 <div class="field-group wide-field-group"><label for="notam">NOTAM</label><input type="text" id="notam" class="field-value modal-trigger" readonly></div>
                 <div id="defects-group" class="field-group wide-field-group"><label for="defects">DEFECTS</label><input type="text" id="defects" class="field-value modal-trigger" readonly></div>
-                <div id="remarks-group" class="field-group"><label for="remarks">REMARKS</label><input type="text" id="remarks" class="field-value modal-trigger" readonly></div>
+                <div id="remarks-group" class="field-group wide-field-group"><label for="remarks">REMARKS</label><input type="text" id="remarks" class="field-value modal-trigger" readonly></div>
             </section>
 
             <!-- SECTION 4: DELAY ATTRIBUTION -->
@@ -375,7 +374,7 @@
                         bw: document.getElementById('bw'), bi: document.getElementById('bi'), cg: document.getElementById('cg'), apd: document.getElementById('apd'), fpr2: document.getElementById('fpr2'),
                         turb: document.getElementById('turb'), terr: document.getElementById('terr'), flightLevels: document.getElementById('flightLevels'), crzWind: document.getElementById('crzWind'), crzTemp: document.getElementById('crzTemp'), optiClimb1: document.getElementById('optiClimb1'), optiClimb2: document.getElementById('optiClimb2'),
                         eta: document.getElementById('eta'), acNextUseFn: document.getElementById('acNextUseFn'), acNextUseStd: document.getElementById('acNextUseStd'),
-                        afir: document.getElementById('afir'), notam: document.getElementById('notam'), remarks: document.getElementById('remarks'), defects: document.getElementById('defects')
+                        afir: document.getElementById('afir'), notam: document.getElementById('notam'), remarks: document.getElementById('remarks'), defects: document.getElementById('defects'), edto: document.getElementById('edto')
                     },
                     buttons: {
                         crzTempToggle: document.getElementById('crzTempToggle'),
@@ -397,7 +396,7 @@
                         acNextUseRoute: document.getElementById('acNextUseRoute'), gndTimeForAc: document.getElementById('gndTimeForAc'),
                         ezfwDelta: document.getElementById('ezfwDelta'), azfwDelta: document.getElementById('azfwDelta'),
                         mzfw: document.getElementById('mzfw'), mtow: document.getElementById('mtow'), mlw: document.getElementById('mlw'),
-                        conseqAvail: document.getElementById('conseq-avail-group'), edto: document.getElementById('edto')
+                        conseqAvail: document.getElementById('conseq-avail-group')
                     },
                     containers: {
                         loginContainer: document.getElementById('login-container'), mainApp: document.getElementById('main-app'),
@@ -491,7 +490,7 @@
         function handleInputChange(key, target) {
             if (!flightData) return;
             let value = target.value;
-            if (['from', 'to', 'registration', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy'].includes(key)) { value = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); } 
+            if (['from', 'to', 'registration', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy', 'edto'].includes(key)) { value = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); } 
             else if (['cic', 'fo'].includes(key)) { value = value.toUpperCase(); }
             target.value = value;
             flightData[currentSectorIndex][key] = value;
@@ -524,11 +523,12 @@
                 bw: v => !isNaN(parseInt(v.replace(/,/g, ''))) ? parseInt(v.replace(/,/g, '')).toLocaleString('en-US') : v,
                 bi: v => { const n = parseInt(v); return !isNaN(n) ? (n.toString().length === 3 ? `${Math.floor(n/10)}.${n%10}%` : `${n}%`) : v; },
                 flightLevels: v => v.replace(/(\d{2})/g, '$1/').slice(0, -1),
-                crzWind: v => v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
+                crzWind: v => /^\d+$/.test(v) && v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
                 elev: v => `${parseInt(v) || 0}ft`,
                 cg: v => { const n = parseFloat(v); return isNaN(n) ? '' : `${v}%`; },
-                optiClimb1: v => v.length === 6 ? `${v.substring(0,3)}KT/FL${v.substring(3)}` : v,
-                optiClimb2: v => v.length === 5 ? `${v.substring(0,3)}KT/M.${v.substring(3)}` : v,
+                optiClimb1: v => /^\d{6}$/.test(v) ? `${v.substring(0,3)}KT/FL${v.substring(3)}` : v,
+                optiClimb2: v => /^\d{5}$/.test(v) ? `${v.substring(0,3)}KT/M.${v.substring(3)}` : v,
+                edto: v => /^[A-Z0-9]{12}$/.test(v) ? `${v.substring(0,4)}-${v.substring(4,8)} (${v.substring(8,12)})` : v,
             };
             
             if (key === 'flightNumber' || key === 'acNextUseFn') {
@@ -615,8 +615,10 @@
         function updateAllCalculations() {
             if (!flightData || !flightData[currentSectorIndex]) return;
             const data = flightData[currentSectorIndex];
-            Object.values(ui.calculated).forEach(field => { if(field) field.textContent = ''; });
-            
+            // Clear all calculated fields first to prevent stale data
+            const calculatedFields = document.querySelectorAll('.calculated');
+            calculatedFields.forEach(field => field.textContent = '');
+
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : {};
             
@@ -625,46 +627,45 @@
             const ezfw1 = parseFloat(data.ezfw1) || 0;
             const showMzfwUnder = azfw ? 'azfw' : (ezfw2 ? 'ezfw2' : 'ezfw1');
             
-            ui.calculated.mzfw.textContent = aircraftType ? `MZFW: ${limits.MZFW.toFixed(1)}` : '';
+            if (ui.calculated.mzfw) ui.calculated.mzfw.textContent = aircraftType ? `MZFW: ${limits.MZFW.toFixed(1)}` : '';
             if(ui.inputs[showMzfwUnder]) ui.inputs[showMzfwUnder].parentElement.appendChild(ui.calculated.mzfw);
             
-            ui.calculated.mtow.textContent = aircraftType ? `MTOW: ${limits.MTOW.toFixed(1)}` : '';
-            ui.calculated.mlw.innerHTML = aircraftType ? `MLW:<br>${limits.MLW.toFixed(1)}` : '';
-            ui.calculated.egt.textContent = limits.EGT;
-            ui.calculated.edto.textContent = data.edto ? `${data.edto.substring(0,8)} (${data.edto.substring(8)})` : '';
+            if (ui.calculated.mtow) ui.calculated.mtow.textContent = aircraftType ? `MTOW: ${limits.MTOW.toFixed(1)}` : '';
+            if (ui.calculated.mlw) ui.calculated.mlw.innerHTML = aircraftType ? `MLW:<br>${limits.MLW.toFixed(1)}` : '';
+            if (ui.calculated.egt) ui.calculated.egt.textContent = limits.EGT;
             
             const crew = parseInt(data.crew) || 0, pax = parseInt(data.pax) || 0;
-            ui.calculated.pob.textContent = pax > 0 ? (crew + pax) : '';
+            if (ui.calculated.pob) ui.calculated.pob.textContent = pax > 0 ? (crew + pax) : '';
 
             const altn = parseFloat(data.altn) || 0, thirtyMin = parseFloat(data.thirtyMin) || 0;
             const reserves = (altn > 0 && thirtyMin > 0) ? altn + thirtyMin : 0;
-            ui.calculated.reserves.textContent = reserves > 0 ? reserves.toFixed(1) : '';
-            ui.containers.reservesGroup.classList.toggle('boxed', reserves > 0);
+            if (ui.calculated.reserves) ui.calculated.reserves.textContent = reserves > 0 ? reserves.toFixed(1) : '';
+            if (ui.containers.reservesGroup) ui.containers.reservesGroup.classList.toggle('boxed', reserves > 0);
             
             const fuel = parseFloat(data.fuel) || 0, burn = parseFloat(data.burn) || 0;
             const zfwToUse = azfw || ezfw2 || ezfw1;
             const plw = zfwToUse > 0 ? fuel - burn - 0.3 + zfwToUse : 0;
-            ui.calculated.plw.textContent = plw > 0 ? plw.toFixed(1) : '';
+            if (ui.calculated.plw) ui.calculated.plw.textContent = plw > 0 ? plw.toFixed(1) : '';
             const ptow = (fuel > 0 && zfwToUse > 0) ? (fuel + zfwToUse) : 0;
-            ui.calculated.ptow.textContent = ptow > 0 ? ptow.toFixed(1) : '';
+            if (ui.calculated.ptow) ui.calculated.ptow.textContent = ptow > 0 ? ptow.toFixed(1) : '';
 
-            ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
+            if (ui.calculated.acNextUseRoute) ui.calculated.acNextUseRoute.textContent = data.acNextUseFrom && data.acNextUseTo ? `${data.acNextUseFrom}/${data.acNextUseTo}` : '';
             const gndTimeForAcMins = calculateTimeDifference(data.eta, data.acNextUseStd);
-            ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
+            if (ui.calculated.gndTimeForAc) ui.calculated.gndTimeForAc.textContent = (gndTimeForAcMins !== null && gndTimeForAcMins >= 0) ? `${Math.floor(gndTimeForAcMins/60)}h ${gndTimeForAcMins%60}m` : '';
             
             const tod=calculateTimeDifference(data.taxi,data.off), tid=calculateTimeDifference(data.on,data.in), aft=calculateTimeDifference(data.off,data.on), abt=calculateTimeDifference(data.out,data.in), ddd=calculateDelay(data.std,data.out), aaa=calculateDelay(data.sta,data.in), blk=calculateTimeDifference(data.std,data.sta), eftMins=timeToMinutes(data.eft);
-            if(blk!==null) ui.calculated.blk.textContent=minutesToHHMM(blk);
-            if(tod!==null) ui.calculated.tod.textContent=`TAXI-OUT: ${minutesToHHMM(tod)}`;
-            if(tid!==null) ui.calculated.tid.textContent=`TAXI-IN: ${minutesToHHMM(tid)}`;
-            if(aft!==null) ui.calculated.aft.textContent=`ACTUAL FLT: ${minutesToHHMM(aft)}`;
-            if(abt!==null) ui.calculated.abt.textContent=`ACTUAL BLK: ${minutesToHHMM(abt)}`;
+            if(ui.calculated.blk) ui.calculated.blk.textContent=minutesToHHMM(blk);
+            if(ui.calculated.tod) ui.calculated.tod.textContent=`TAXI-OUT: ${minutesToHHMM(tod)}`;
+            if(ui.calculated.tid) ui.calculated.tid.textContent=`TAXI-IN: ${minutesToHHMM(tid)}`;
+            if(ui.calculated.aft) ui.calculated.aft.textContent=`ACTUAL FLT: ${minutesToHHMM(aft)}`;
+            if(ui.calculated.abt) ui.calculated.abt.textContent=`ACTUAL BLK: ${minutesToHHMM(abt)}`;
             
-            if(ddd!==null){if(ddd>0)setFieldText(ui.calculated.ddd,`DEP DEL: +${ddd}m`,'red');else if(ddd<0)setFieldText(ui.calculated.ddd,`${-ddd}m early`,'green');}
-            if(aaa!==null){if(aaa>0)setFieldText(ui.calculated.aaa,`ARR DEL: +${aaa}m`,'red');else if(aaa<0)setFieldText(ui.calculated.aaa,`${-aaa}m early`,'green');}
+            if(ddd!==null && ui.calculated.ddd){if(ddd>0)setFieldText(ui.calculated.ddd,`DEP DEL: +${ddd}m`,'red');else if(ddd<0)setFieldText(ui.calculated.ddd,`${-ddd}m early`,'green');}
+            if(aaa!==null && ui.calculated.aaa){if(aaa>0)setFieldText(ui.calculated.aaa,`ARR DEL: +${aaa}m`,'red');else if(aaa<0)setFieldText(ui.calculated.aaa,`${-aaa}m early`,'green');}
             
             const prevSectorData = currentSectorIndex > 0 ? flightData[currentSectorIndex - 1] : null;
-            if (prevSectorData) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `CONSEQ AVAIL FM PRIOR: +${prevAaa}m` : '';
-            } else { ui.calculated.conseqAvail.textContent = ''; }
+            if (prevSectorData && ui.calculated.conseqAvail) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `CONSEQ AVAIL FM PRIOR: +${prevAaa}m` : '';
+            } else if (ui.calculated.conseqAvail) { ui.calculated.conseqAvail.textContent = ''; }
         }
 
         // --- Utility Functions ---
@@ -696,7 +697,7 @@
             propagateValueToFutureSectors('date', dateValue);
             saveAndRecalculate();
         }
-        function setFieldText(el, text, color = null) { el.textContent = text; el.style.color = color ? `var(--${color}-color)` : ''; }
+        function setFieldText(el, text, color = null) { if(el) {el.textContent = text; el.style.color = color ? `var(--${color}-color)` : '';} }
         function updateActiveSectorButton() { ui.toolbar.sectorButtons.forEach((btn, i) => btn.classList.toggle('active', i === currentSectorIndex)); }
         function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => { if (flightData[i]) flightData[i].report = rpt; }); } } }
         function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex + 1; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
@@ -741,7 +742,7 @@
             yPos += 30;
             
             const printField = (label, value) => {
-                if (!value || value.trim() === '' || value.includes('NaN')) return;
+                if (!value || String(value).trim() === '' || String(value).includes('NaN')) return;
                 doc.setFontSize(8);
                 doc.setTextColor("#a0a0a0");
                 doc.text(label, leftMargin, yPos, { align: 'left' });
