@@ -20,6 +20,11 @@
             --navy-blue-bg: #000033; /* Even Darker blue */
         }
 
+        /* Applying box-sizing to all elements for consistent width calculation */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background-color: var(--background-color);
@@ -117,6 +122,7 @@
             text-transform: uppercase; border-radius: 4px;
             font-weight: 600;
             -moz-appearance: none; -webkit-appearance: none; appearance: none;
+            font-family: inherit; /* Ensuring consistent font family */
         }
         #date.field-value::placeholder { color: var(--text-color); opacity: 1; }
         select.field-value { text-align-last: center; }
@@ -128,7 +134,16 @@
         .flight-data-section .field-group { flex: 1 1 65px; min-width: 60px; }
         @media (min-width: 768px) { .flight-data-section .data-section-content { flex-wrap: nowrap; } }
         .input-with-tz { display: flex; flex-direction: column-reverse; align-items: center; width: 100%;}
-        .timezone-input { font-size: 9px; color: var(--subtle-text-color); height: 11px;}
+        .timezone-input { 
+            font-size: 9px; 
+            color: var(--subtle-text-color); 
+            height: 11px;
+            /* Making timezone non-selectable and non-interactive */
+            pointer-events: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+        }
 
         /* --- Section 2: Timings --- */
         .timings-section { flex-direction: column; gap: 0; padding-bottom: 5px; }
@@ -145,7 +160,7 @@
         #acNextUse-group .calculated { font-size: 10px; min-height: 1em; }
 
         /* --- Section 3: Flight Planning --- */
-        .flight-planning-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px 5px; width: 100%; align-items: start; }
+        .flight-planning-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px 5px; align-items: start; }
         .flight-planning-section label { height: auto; }
         .flight-planning-section .field-value, .flight-planning-section .calculated, .flight-planning-section select.field-value { height: 24px; font-size: clamp(11px, 3vw, 14px); }
         .input-with-toggle { display: flex; align-items: center; justify-content: center; width:100%;}
@@ -201,8 +216,8 @@
                     <div class="field-group"><label for="date" id="date-label">DATE</label><input type="text" id="date" class="field-value" placeholder=""></div>
                     <div class="field-group"><label for="from">FROM</label><div class="input-with-tz"><input type="text" id="from-tz" class="timezone-input" readonly><input type="text" id="from" class="field-value" maxlength="3" autocapitalize="characters"></div></div>
                     <div class="field-group"><label for="to">TO</label><div class="input-with-tz"><input type="text" id="to-tz" class="timezone-input" readonly><input type="text" id="to" class="field-value" maxlength="3" autocapitalize="characters"></div></div>
-                    <div class="field-group"><label for="cic">CIC</label><div id="cic" class="field-value shrink-to-fit"></div></div>
-                    <div class="field-group"><label for="fo">FO</label><div id="fo" class="field-value shrink-to-fit"></div></div>
+                    <div class="field-group"><label for="cic">CIC</label><input type="text" id="cic" class="field-value shrink-to-fit"></div>
+                    <div class="field-group"><label for="fo">FO</label><input type="text" id="fo" class="field-value shrink-to-fit"></div>
                     <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
                     <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
                     <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value"></div>
@@ -368,6 +383,7 @@
                 ui = {
                     inputs: {
                         flightNumber: document.getElementById('flightNumber'), date: document.getElementById('date'), from: document.getElementById('from'), to: document.getElementById('to'), registration: document.getElementById('registration'), report: document.getElementById('report'), depGate: document.getElementById('depGate'),
+                        cic: document.getElementById('cic'), fo: document.getElementById('fo'),
                         out: document.getElementById('out'), taxi: document.getElementById('taxi'), off: document.getElementById('off'), on: document.getElementById('on'), in: document.getElementById('in'), std: document.getElementById('std'), eft: document.getElementById('eft'), sta: document.getElementById('sta'),
                         fromTz: document.getElementById('from-tz'), toTz: document.getElementById('to-tz'),
                         sid: document.getElementById('sid'), star: document.getElementById('star'), app: document.getElementById('app'), rwy: document.getElementById('rwy'), trans: document.getElementById('trans'), elev: document.getElementById('elev'),
@@ -396,7 +412,6 @@
                         ezfwDelta: document.getElementById('ezfwDelta'), azfwDelta: document.getElementById('azfwDelta'),
                         mzfw: document.getElementById('mzfw'), mtow: document.getElementById('mtow'), mlw: document.getElementById('mlw'),
                         conseqAvail: document.getElementById('conseq-avail-group'), 
-                        cic: document.getElementById('cic'), fo: document.getElementById('fo'),
                         optiClimb1: document.getElementById('optiClimb1'), optiClimb2: document.getElementById('optiClimb2'),
                         crzWind: document.getElementById('crzWind'), edto: document.getElementById('edto')
                     },
@@ -456,7 +471,7 @@
             });
 
             // Special click handlers for calculated fields that need input
-            ['cic', 'fo', 'optiClimb1', 'optiClimb2', 'crzWind', 'edto'].forEach(id => {
+            ['optiClimb1', 'optiClimb2', 'crzWind', 'edto'].forEach(id => {
                 ui.calculated[id].addEventListener('click', () => handleCalculatedFieldClick(id));
             });
 
@@ -499,13 +514,12 @@
         function handleInputChange(key, target) {
             if (!flightData) return;
             let value = target.value;
-            if (['from', 'to', 'registration', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy'].includes(key)) { value = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); } 
+            if (['from', 'to', 'registration', 'depGate', 'arrGate', 'sid', 'star', 'trans', 'rwy', 'cic', 'fo'].includes(key)) { value = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); } 
             target.value = value;
             flightData[currentSectorIndex][key] = value;
             
             if (key === 'taxi') { if (target.value.length === 5) ui.inputs.off.focus(); }
             if (['depGate', 'arrGate'].includes(key) && value.length === 3) target.blur();
-            if (['histBurn', 'histCarriage'].includes(key) && value.length === 2) target.blur();
 
             if (target.classList.contains('time-input')) { value = formatTimeInput(target); }
             if (['cic', 'fo'].includes(key)) propagateValueToFutureSectors(key, value);
@@ -553,7 +567,7 @@
                 }
             } else {
                 let formattedValue = value;
-                if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','apd','fpr2'].includes(key)) { formattedValue = parseFloat(value) ? (parseFloat(value)/10).toFixed(1) : ''; }
+                if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','apd','fpr2', 'histBurn', 'histCarriage'].includes(key)) { formattedValue = parseFloat(value) ? (parseFloat(value)/10).toFixed(1) : ''; }
                 else if (formatters[key]) { formattedValue = formatters[key](value); }
                 target.value = formattedValue; data[key] = formattedValue; 
             }
@@ -589,15 +603,43 @@
 
         function handleCalculatedFieldClick(id) {
             const currentVal = flightData[currentSectorIndex][id] || '';
-            const newVal = prompt(`Enter value for ${id.toUpperCase()}:`, currentVal);
+            let promptMessage = `Enter value for ${id.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}:`;
+            
+            if (id === 'optiClimb1') promptMessage = "Enter 6 digits for Opti Climb 1:";
+            if (id === 'optiClimb2') promptMessage = "Enter 5 digits for Opti Climb 2:";
+            if (id === 'edto') promptMessage = "Enter 8 or 12 letters for EDTO:";
+
+            const newVal = prompt(promptMessage, currentVal);
+
             if (newVal !== null) {
-                flightData[currentSectorIndex][id] = newVal.toUpperCase();
+                let validatedVal = newVal.toUpperCase();
+                
+                if (id === 'optiClimb1') {
+                    const numericVal = validatedVal.replace(/[^0-9]/g, '');
+                    if (numericVal.length !== 6) return; // Fail silently
+                    validatedVal = numericVal;
+                }
+                
+                if (id === 'optiClimb2') {
+                    const numericVal = validatedVal.replace(/[^0-9]/g, '');
+                    if (numericVal.length !== 5) return; // Fail silently
+                    validatedVal = numericVal;
+                }
+                
+                if (id === 'edto') {
+                    const alphaVal = validatedVal.replace(/[^A-Z]/gi, '');
+                    if (alphaVal.length !== 8 && alphaVal.length !== 12) return; // Fail silently
+                    validatedVal = alphaVal;
+                }
+                
+                flightData[currentSectorIndex][id] = validatedVal;
                 saveAndRecalculate();
             }
         }
         
         // --- UI & Calculations ---
         function loadDataForSector(sectorIndex) {
+            currentSectorIndex = sectorIndex; // Ensure index is set
             const data = flightData[sectorIndex] || createEmptySector();
             Object.keys(ui.inputs).forEach(key => {
                 const el = ui.inputs[key];
@@ -620,14 +662,25 @@
             Object.keys(ui.calculated).forEach(key => {
                 const el = ui.calculated[key];
                 if (el && data[key]) {
-                    el.textContent = data[key];
+                    el.innerHTML = data[key]; // Use innerHTML for fields with <br>
+                } else if (el) {
+                    el.innerHTML = '';
                 }
             });
 
             ui.buttons.crzTempToggle.textContent = data.crzTempSign || 'M';
-            ui.inputs.report.readOnly = (sectorIndex === 0);
+            ui.inputs.report.readOnly = (sectorIndex !== 0);
             ui.containers.flightDataSection.classList.toggle('flight-data-odd-sector', [1,3,5].includes(sectorIndex));
-            updateAllCalculations(); updateActiveSectorButton(); renderDelayCodes(); renderQuickReferenceDelays();
+            updateAllCalculations(); 
+            updateActiveSectorButton(); 
+            renderDelayCodes(); 
+            renderQuickReferenceDelays();
+        }
+        
+        // FIX: Added missing function to fix sector switching
+        function saveAndRecalculate() {
+            updateAllCalculations();
+            saveToFirestore();
         }
         
         function updateAllCalculations() {
@@ -635,7 +688,11 @@
             const data = flightData[currentSectorIndex];
             
             const calculatedFields = document.querySelectorAll('.calculated');
-            calculatedFields.forEach(field => { if(!['cic','fo','optiClimb1','optiClimb2','crzWind','edto'].includes(field.id)) field.textContent = ''; });
+            calculatedFields.forEach(field => { 
+                if(!['optiClimb1','optiClimb2','crzWind','edto'].includes(field.id)) {
+                     field.textContent = ''; 
+                }
+            });
 
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : {};
@@ -645,11 +702,11 @@
             const ezfw1 = parseFloat(data.ezfw1) || 0;
             const showMzfwUnder = azfw ? 'azfw' : (ezfw2 ? 'ezfw2' : 'ezfw1');
             
-            if (ui.calculated.mzfw) ui.calculated.mzfw.textContent = aircraftType ? `MZFW: ${limits.MZFW.toFixed(1)}` : '';
+            if (ui.calculated.mzfw) ui.calculated.mzfw.textContent = aircraftType ? `MZFW ${limits.MZFW.toFixed(1)}` : '';
             if(ui.inputs[showMzfwUnder]) ui.inputs[showMzfwUnder].parentElement.appendChild(ui.calculated.mzfw);
             
-            if (ui.calculated.mtow) ui.calculated.mtow.textContent = aircraftType ? `MTOW: ${limits.MTOW.toFixed(1)}` : '';
-            if (ui.calculated.mlw) ui.calculated.mlw.innerHTML = aircraftType ? `MLW:<br>${limits.MLW.toFixed(1)}` : '';
+            if (ui.calculated.mtow) ui.calculated.mtow.textContent = aircraftType ? `MTOW ${limits.MTOW.toFixed(1)}` : '';
+            if (ui.calculated.mlw) ui.calculated.mlw.innerHTML = aircraftType ? `MLW<br>${limits.MLW.toFixed(1)}` : '';
             if (ui.calculated.egt) ui.calculated.egt.textContent = limits.EGT;
             
             const crew = parseInt(data.crew) || 0, pax = parseInt(data.pax) || 0;
@@ -705,16 +762,20 @@
             } else if (ui.calculated.conseqAvail) { ui.calculated.conseqAvail.textContent = ''; }
 
             // Update formatted display fields
-            ['cic','fo','optiClimb1','optiClimb2','crzWind','edto'].forEach(id => {
+            ['optiClimb1','optiClimb2','crzWind','edto'].forEach(id => {
                 const el = ui.calculated[id];
                 const val = data[id];
                 const formatters = {
-                    optiClimb1: v => /^\d{6}$/.test(v) ? `${v.substring(0,3)}KT<br>/FL${v.substring(3)}` : v,
-                    optiClimb2: v => /^\d{5}$/.test(v) ? `${v.substring(0,3)}KT<br>/M.${v.substring(3)}` : v,
-                    crzWind: v => /^\d+$/.test(v) && v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
-                    edto: v => /^[A-Z0-9]{12}$/.test(v) ? `${v.substring(0,4)}-${v.substring(4,8)}<br>(${v.substring(8,12)})` : v,
+                    optiClimb1: v => v && /^\d{6}$/.test(v) ? `${v.substring(0,3)}kt/<br>FL${v.substring(3)}` : v,
+                    optiClimb2: v => v && /^\d{5}$/.test(v) ? `${v.substring(0,3)}/<br>M.${v.substring(3)}` : v,
+                    crzWind: v => v && /^\d+$/.test(v) && v.length >= 4 ? `${v.substring(0,3)}/${v.substring(3)}` : v,
+                    edto: v => {
+                        if (v && /^[A-Z]{8}$/.test(v)) return `${v.substring(0,4)}-${v.substring(4,8)}`;
+                        if (v && /^[A-Z]{12}$/.test(v)) return `${v.substring(0,4)}-${v.substring(4,8)}<br>(${v.substring(8,12)})`;
+                        return v || '';
+                    }
                 };
-                if(el) el.innerHTML = formatters[id] ? formatters[id](val) : val;
+                if(el) el.innerHTML = formatters[id] ? formatters[id](val) : (val || '');
             });
         }
 
@@ -757,7 +818,7 @@
         function autoCalculateReportTime(std) { if (currentSectorIndex === 0) { const stdMins = timeToMinutes(std); if (stdMins !== null) { const rpt = minutesToHHMM((stdMins-60+1440)%1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; [1,2,3].forEach(i => { if (flightData[i]) flightData[i].report = rpt; }); } } }
         function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex + 1; i < 6; i++) if(flightData[i]) flightData[i][key] = val; }
         function toggleCrzTemp() { if (!flightData) return; const newSign = ui.buttons.crzTempToggle.textContent === 'M' ? 'P' : 'M'; ui.buttons.crzTempToggle.textContent = newSign; flightData[currentSectorIndex].crzTempSign = newSign; }
-        function switchSector(sectorIndex) { currentSectorIndex = sectorIndex; saveAndRecalculate(); loadDataForSector(currentSectorIndex); }
+        function switchSector(sectorIndex) { saveAndRecalculate(); loadDataForSector(sectorIndex); }
         function getAircraftType() { if (!flightData || !flightData[currentSectorIndex]) return null; const reg = (flightData[currentSectorIndex].registration || '').toUpperCase().replace('9V-', ''); if (reg.length >= 2) { if (reg.charAt(1) === 'B') return 'MAX'; if (reg.charAt(1) === 'G') return 'NG'; } return null; }
         function clearCurrentSector() { if (window.confirm("Clear all data for this sector?")) { const {cic, fo, date} = flightData[currentSectorIndex]; flightData[currentSectorIndex] = {...createEmptySector(), cic, fo, date}; loadDataForSector(currentSectorIndex); saveAndRecalculate(); } }
         function clearAllSectors() { if (window.confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); currentSectorIndex=0; loadDataForSector(0); saveAndRecalculate(); } }
@@ -856,4 +917,3 @@
     </script>
 </body>
 </html>
-
