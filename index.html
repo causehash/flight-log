@@ -791,7 +791,7 @@
 
             if (ui.calculated.plw) ui.calculated.plw.style.color = plwExceeded ? redColor : defaultColor;
             if (ui.labels.plw) ui.labels.plw.style.color = plwExceeded ? redColor : defaultColor;
-            if (ui.calculated.mlw) ui.calculated.mlw.style.color = plwExceeded ? redColor : subtleColor;
+            if (ui.calculated.mlw) ui.calculated.mlw.style.color = subtleColor;
 
             const ptow = (fuel > 0 && zfwToUse > 0) ? (fuel + zfwToUse) : 0;
             if (ui.calculated.ptow) ui.calculated.ptow.textContent = ptow > 0 ? ptow.toFixed(1) : '';
@@ -859,6 +859,12 @@
             const prevSectorData = currentSectorIndex > 0 ? flightData[currentSectorIndex - 1] : null;
             if (prevSectorData && ui.calculated.conseqAvail) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `(Consq Avail: +${prevAaa}m)` : '';
             } else if (ui.calculated.conseqAvail) { ui.calculated.conseqAvail.textContent = ''; }
+            
+            // Local Times
+            const stdlText = calculateLocalTime(data.std, data.fromTz);
+            const stalText = calculateLocalTime(data.sta, data.toTz);
+            if (ui.calculated.stdl) ui.calculated.stdl.textContent = stdlText;
+            if (ui.calculated.stal) ui.calculated.stal.textContent = stalText;
 
             // Update formatted display fields
             ['optiClimb1','optiClimb2','crzWind','edto'].forEach(id => {
