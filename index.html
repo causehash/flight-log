@@ -130,7 +130,7 @@
             font-size: clamp(12px, 3vw, 14px);
         }
         #cic.field-value {
-            font-size: clamp(11px, 2.8vw, 13px);
+            font-size: clamp(10px, 2.5vw, 12px);
         }
         select.field-value { text-align-last: center; }
         input:focus, select:focus, textarea:focus { background-color: var(--border-color); outline: 2px solid var(--focus-color); }
@@ -197,10 +197,11 @@
         #remarks.field-value {
             height: auto;
             min-height: calc(3 * 1.5em);
-            padding-top: 5px;
-            padding-bottom: 5px;
+            padding: 5px;
             resize: vertical;
             border: 1px solid var(--border-color);
+            text-align: left;
+            white-space: pre-wrap;
         }
         
         /* --- Toolbar & Modals --- */
@@ -289,7 +290,7 @@
                 <div class="timings-sub-row">
                     <div class="field-group"><div id="stdl" class="sub-field-value local-time"></div></div>
                     <div class="field-group"><div id="aft" class="sub-field-value"></div><div id="aftd" class="sub-field-value"></div></div>
-                    <div class="field-group"><div id="abt" class="sub-field-value"></div><div id="sib" class="sub-field-value"></div></div>
+                    <div class="field-group"><div id="abt" class="sub-field-value"></div><div id="abtd" class="sub-field-value"></div></div>
                     <div class="field-group"><div id="stal" class="sub-field-value local-time"></div></div>
                 </div>
                 <div class="timings-turnaround-row">
@@ -334,7 +335,7 @@
                 <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="bw">BW</label><input type="text" id="bw" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="bi">BI</label><input type="text" id="bi" class="field-value" inputmode="numeric" maxlength="3"></div>
-                <div class="field-group"><label for="apd">APD</label><input type="text" id="apd" class="field-value" inputmode="numeric" maxlength="2"></div>
+                <div class="field-group"><label for="apd">APD</label><input type="text" id="apd" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="fpr2">NEXT FPR</label><input type="text" id="fpr2" class="field-value" inputmode="numeric"></div>
                 <div class="field-group" id="tanker-delta-group"><label>TANK DELT</label><div id="tankerDelta" class="calculated"></div></div>
                 <div class="field-group"><label for="turb">TURB</label><input type="text" id="turb" class="field-value" inputmode="numeric"></div>
@@ -357,8 +358,8 @@
                 <div class="field-group"><label for="histBurn">HIST BURN</label><input type="text" id="histBurn" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="histCarriage">HIST CARR</label><input type="text" id="histCarriage" class="field-value" inputmode="numeric"></div>
                 <div class="field-group wide-field-group"><label for="afir">AFIR</label><input type="text" id="afir" class="field-value modal-trigger small-text-field" readonly></div>
-                <div class="field-group"><label for="notam">NOTAM</label><input type="text" id="notam" class="field-value modal-trigger small-text-field" readonly></div>
-                <div id="defects-group" class="field-group"><label for="defects">DEFECTS</label><input type="text" id="defects" class="field-value modal-trigger small-text-field" readonly></div>
+                <div class="field-group wide-field-group"><label for="notam">NOTAM</label><input type="text" id="notam" class="field-value modal-trigger small-text-field" readonly></div>
+                <div id="defects-group" class="field-group wide-field-group"><label for="defects">DEFECTS</label><input type="text" id="defects" class="field-value modal-trigger small-text-field" readonly></div>
                 <div id="remarks-group" class="field-group wide-field-group"><label for="remarks">REMARKS</label><textarea id="remarks" class="field-value"></textarea></div>
             </section>
 
@@ -394,7 +395,6 @@
         <!-- MODALS -->
         <div id="afir-modal" class="modal"><div class="modal-content"><h2>AFIR Details</h2><textarea id="afir-textarea" class="modal-textarea"></textarea><button id="save-afir-btn">Save & Close</button></div></div>
         <div id="notam-modal" class="modal"><div class="modal-content"><h2>NOTAM Details</h2><textarea id="notam-textarea" class="modal-textarea"></textarea><button id="save-notam-btn">Save & Close</button></div></div>
-        <div id="remarks-modal" class="modal"><div class="modal-content"><h2>Remarks</h2><textarea id="remarks-textarea" class="modal-textarea"></textarea><button id="save-remarks-btn">Save & Close</button></div></div>
         <div id="defects-modal" class="modal"><div class="modal-content"><h2>Defects</h2><textarea id="defects-textarea" class="modal-textarea"></textarea><button id="save-defects-btn">Save & Close</button></div></div>
     </div>
     
@@ -449,7 +449,7 @@
                     },
                     calculated: {
                         ddd: document.getElementById('ddd'), cddd: document.getElementById('cddd'), addd: document.getElementById('addd'), tod: document.getElementById('tod'), tid: document.getElementById('tid'), aaa: document.getElementById('aaa'), caaa: document.getElementById('caaa'), aaaa: document.getElementById('aaaa'),
-                        stdl: document.getElementById('stdl'), aft: document.getElementById('aft'), aftd: document.getElementById('aftd'), blk: document.getElementById('blk'), abt: document.getElementById('abt'), sib: document.getElementById('sib'), stal: document.getElementById('stal'),
+                        stdl: document.getElementById('stdl'), aft: document.getElementById('aft'), aftd: document.getElementById('aftd'), blk: document.getElementById('blk'), abt: document.getElementById('abt'), abtd: document.getElementById('abtd'),
                         gndTimeAvail: document.getElementById('gndTimeAvail'), myNextFlt: document.getElementById('myNextFlt'),
                         pob: document.getElementById('pob'), reserves: document.getElementById('reserves'), ptow: document.getElementById('ptow'),
                         plw: document.getElementById('plw'), egt: document.getElementById('egt'), tankerDelta: document.getElementById('tankerDelta'),
@@ -468,8 +468,13 @@
                     toolbar: { sectorButtons: document.querySelectorAll('.sector-btn') },
                     delay: { container: document.getElementById('delay-codes-container'), quickRefContainer: document.getElementById('quick-ref-delays-container') },
                     userIdDisplay: document.getElementById('user-id-display'),
-                    modals: { afir: document.getElementById('afir-modal'), notam: document.getElementById('notam-modal'), remarks: document.getElementById('remarks-modal'), defects: document.getElementById('defects-modal') },
-                    textareas: { afir: document.getElementById('afir-textarea'), notam: document.getElementById('notam-textarea'), remarks: document.getElementById('remarks'), defects: document.getElementById('defects-textarea') }
+                    modals: { afir: document.getElementById('afir-modal'), notam: document.getElementById('notam-modal'), defects: document.getElementById('defects-modal') },
+                    textareas: { 
+                        afir: document.getElementById('afir-textarea'), 
+                        notam: document.getElementById('notam-textarea'), 
+                        remarks: document.getElementById('remarks'), 
+                        defects: document.getElementById('defects-textarea') 
+                    }
                 };
                 
                 const firebaseConfig = { apiKey: "AIzaSyD56g-MYRr6em682dDNA9ahAtdo-JLugfI", authDomain: "flight-log-3aa33.firebaseapp.com", projectId: "flight-log-3aa33", storageBucket: "flight-log-3aa33.appspot.com", messagingSenderId: "160744126033", appId: "1:160744126033:web:ec744ad18373aeed496a70" };
@@ -510,12 +515,14 @@
                 if (key !== 'date' && el) {
                     el.addEventListener('input', (e) => handleInputChange(key, e.target));
                     el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
-                    el.addEventListener('focus', (e) => {
-                        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-                             e.target.value = '';
-                        }
-                    });
-                    el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+                    if (key !== 'remarks') {
+                         el.addEventListener('focus', (e) => {
+                            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                                e.target.select();
+                            }
+                        });
+                    }
+                    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') { e.preventDefault(); e.target.blur(); } });
                 }
             });
 
@@ -555,7 +562,6 @@
                 if (serverData) {
                     flightData = serverData.sectors || Array(6).fill(null).map(() => createEmptySector());
                     const serverIndex = serverData.currentSectorIndex || 0;
-                    // Only update local index if it's different, preventing reverts
                     if (currentSectorIndex !== serverIndex) {
                         currentSectorIndex = serverIndex;
                     }
@@ -576,10 +582,12 @@
             if (['from', 'to', 'registration', 'sid', 'star', 'trans', 'rwy'].includes(key)) {
                 value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             } else if (['cic', 'fo'].includes(key)) {
-                value = value.toUpperCase().replace(/[^A-Z0-9 ]/g, ''); // Allow spaces
+                value = value.toUpperCase().replace(/[^A-Z0-9 ]/g, ''); 
             } else if (['depGate', 'arrGate'].includes(key)) {
                  value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
                  if (value.length === 5) target.blur();
+            } else if (key === 'histBurn') {
+                 value = value.replace(/[^-0-9]/g, '');
             }
 
             if (key === 'crzTemp' && value.length >= 2) {
@@ -590,7 +598,7 @@
             flightData[currentSectorIndex][key] = value;
             
             if (target.classList.contains('time-input')) { value = formatTimeInput(target); }
-            if (['cic', 'fo'].includes(key)) propagateValueToFutureSectors(key, value);
+            if (['cic', 'fo', 'registration'].includes(key)) propagateValueToFutureSectors(key, value);
             saveAndRecalculate();
         }
 
@@ -635,23 +643,26 @@
                 }
             } else {
                 let formattedValue = value;
-                 if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','apd','fpr2', 'histBurn', 'histCarriage', 'pln'].includes(key)) {
+                if (['ezfw1','ezfw2','azfw','fuel','burn','altn','thirtyMin','cont','apd','fpr2', 'histBurn', 'histCarriage', 'pln'].includes(key)) {
                     const num = parseFloat(value);
-                    formattedValue = !isNaN(num) ? (num / 10).toFixed(1) : '';
+                    if (!isNaN(num)) {
+                         formattedValue = (num / 10).toFixed(1);
+                    } else {
+                         formattedValue = '';
+                    }
                 }
                 else if (formatters[key]) { formattedValue = formatters[key](value); }
                 target.value = formattedValue; data[key] = formattedValue; 
             }
             
-            if (['registration', 'bw', 'bi', 'remarks', 'defects', 'apd'].includes(key)) {
+            if (['bw', 'bi', 'remarks', 'defects'].includes(key)) { // removed registration, apd
                 const propValue = data[key];
                 if ([0, 2, 4].includes(currentSectorIndex) && currentSectorIndex < 5) {
                     if(flightData[currentSectorIndex + 1]) flightData[currentSectorIndex + 1][key] = propValue;
                 }
-                if (key === 'registration' && currentSectorIndex === 0) {
-                     if(flightData[2]) flightData[2].registration = propValue;
-                     if(flightData[3]) flightData[3].registration = propValue;
-                }
+            }
+             if (['apd'].includes(key)) {
+                propagateValueToFutureSectors(key, data[key]);
             }
 
             if (['from', 'to'].includes(key)) {
@@ -676,8 +687,8 @@
             const currentVal = flightData[currentSectorIndex][id] || '';
             let promptMessage = `Enter value for ${id.replace(/([A-Z])/g, ' $1').trim().toUpperCase()}:`;
             
-            if (id === 'optiClimb1') promptMessage = "Enter 6 digits for Opti Climb 1:";
-            if (id === 'optiClimb2') promptMessage = "Enter 5 digits for Opti Climb 2:";
+            if (id === 'optiClimb1') promptMessage = "Enter 6 digits for Opti Climb 1 (or NIL):";
+            if (id === 'optiClimb2') promptMessage = "Enter 5 digits for Opti Climb 2 (or NIL):";
             if (id === 'edto') promptMessage = "Enter 8 or 12 letters for EDTO:";
 
             const newVal = prompt(promptMessage, currentVal);
@@ -685,16 +696,15 @@
             if (newVal !== null) {
                 let validatedVal = newVal.toUpperCase();
                 
-                if (id === 'optiClimb1') {
-                    const numericVal = validatedVal.replace(/[^0-9]/g, '');
-                    if (numericVal.length !== 6) return;
-                    validatedVal = numericVal;
-                }
-                
-                if (id === 'optiClimb2') {
-                    const numericVal = validatedVal.replace(/[^0-9]/g, '');
-                    if (numericVal.length !== 5) return;
-                    validatedVal = numericVal;
+                if (id === 'optiClimb1' || id === 'optiClimb2') {
+                    if (validatedVal === 'NIL') {
+                        // Keep it as NIL
+                    } else {
+                        const numericVal = validatedVal.replace(/[^0-9]/g, '');
+                        const requiredLength = id === 'optiClimb1' ? 6 : 5;
+                        if (numericVal.length !== requiredLength) return; 
+                        validatedVal = numericVal;
+                    }
                 }
                 
                 if (id === 'edto') {
@@ -760,13 +770,6 @@
             if (!flightData || !flightData[currentSectorIndex]) return;
             const data = flightData[currentSectorIndex];
             
-            const calculatedFields = document.querySelectorAll('.calculated');
-            calculatedFields.forEach(field => { 
-                if(!['optiClimb1','optiClimb2','crzWind','edto'].includes(field.id)) {
-                     field.textContent = ''; 
-                }
-            });
-
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : {};
             
@@ -781,6 +784,7 @@
             if (ui.calculated.mtow) ui.calculated.mtow.textContent = aircraftType ? `MTOW ${limits.MTOW.toFixed(1)}` : '';
             if (ui.calculated.mlw) ui.calculated.mlw.innerHTML = aircraftType ? `MLW<br>${limits.MLW.toFixed(1)}` : '';
             if (ui.calculated.egt) ui.calculated.egt.textContent = limits.EGT;
+            if (ui.labels.egt) ui.labels.egt.style.color = 'var(--subtle-text-color)';
             
             const crew = parseInt(data.crew) || 0, pax = parseInt(data.pax) || 0;
             if (ui.calculated.pob) ui.calculated.pob.textContent = pax > 0 ? (crew + pax) : '';
@@ -838,8 +842,13 @@
                 ui.calculated.gndTimeAvail.textContent = '';
             }
             
-            const tod=calculateTimeDifference(data.taxi,data.off), tid=calculateTimeDifference(data.on,data.in), aft=calculateTimeDifference(data.off,data.on), abt=calculateTimeDifference(data.out,data.in), ddd=calculateDelay(data.std,data.out), aaa=calculateDelay(data.sta,data.in), blk=calculateTimeDifference(data.std,data.sta);
+            const tod=calculateTimeDifference(data.taxi,data.off), tid=calculateTimeDifference(data.on,data.in), ddd=calculateDelay(data.std,data.out), aaa=calculateDelay(data.sta,data.in);
             
+            const aft=calculateTimeDifference(data.off,data.on);
+            const abt=calculateTimeDifference(data.out,data.in);
+            const blk=calculateTimeDifference(data.std,data.sta);
+            const eftMins = timeToMinutes(data.eft);
+
             if(ui.calculated.blk) ui.calculated.blk.textContent=minutesToHHMM(blk);
             if(ui.calculated.tod) ui.calculated.tod.textContent = tod !== null ? `Taxi-Out: ${tod}m` : '';
             if(ui.calculated.tid) ui.calculated.tid.textContent = tid !== null ? `Taxi-In: ${tid}m` : '';
@@ -847,28 +856,37 @@
             if(ui.calculated.aft) ui.calculated.aft.textContent = aft !== null ? `Actual: ${minutesToHHMM(aft)}` : '';
             if(ui.calculated.abt) ui.calculated.abt.textContent = abt !== null ? `Actual: ${minutesToHHMM(abt)}` : '';
             
+            // Time difference calculations
+            if (aft !== null && eftMins !== null) {
+                const diff = aft - eftMins;
+                if (diff > 0) setFieldText(ui.calculated.aftd, `${diff}m longer`, 'red');
+                else if (diff < 0) setFieldText(ui.calculated.aftd, `${-diff}m shorter`, 'green');
+                else setFieldText(ui.calculated.aftd, 'on time');
+            } else { setFieldText(ui.calculated.aftd, ''); }
+
+            if (abt !== null && blk !== null) {
+                const diff = abt - blk;
+                if (diff > 0) setFieldText(ui.calculated.abtd, `${diff}m longer`, 'red');
+                else if (diff < 0) setFieldText(ui.calculated.abtd, `${-diff}m shorter`, 'green');
+                 else setFieldText(ui.calculated.abtd, 'on time');
+            } else { setFieldText(ui.calculated.abtd, ''); }
+
             if(ddd!==null && ui.calculated.ddd){if(ddd>0)setFieldText(ui.calculated.ddd,`${ddd}m late`,'red');else if(ddd<0)setFieldText(ui.calculated.ddd,`${-ddd}m early`,'green'); else setFieldText(ui.calculated.ddd,'');}
             if(aaa!==null && ui.calculated.aaa){if(aaa>0)setFieldText(ui.calculated.aaa,`${aaa}m late`,'red');else if(aaa<0)setFieldText(ui.calculated.aaa,`${-aaa}m early`,'green'); else setFieldText(ui.calculated.aaa,'');}
             
             // Consequential & Additional Delays
             let cddd = 0, addd = 0, caaa = 0, aaaa = 0;
             
-            // Departure Delays
             if ([1, 3, 5].includes(currentSectorIndex) && ddd > 0) {
                 const prevSectorData = flightData[currentSectorIndex - 1];
                 if (prevSectorData) {
                     const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in);
-                    if (prevAaa > 0) {
-                        cddd = Math.min(ddd, prevAaa);
-                    }
+                    if (prevAaa > 0) cddd = Math.min(ddd, prevAaa);
                 }
             }
             if (ddd > 0) addd = ddd - cddd;
 
-            // Arrival Delays
-            if (aaa > 0 && ddd > 0) {
-                caaa = Math.min(aaa, ddd);
-            }
+            if (aaa > 0 && ddd > 0) caaa = Math.min(aaa, ddd);
             if (aaa > 0) aaaa = aaa - caaa;
 
             setFieldText(ui.calculated.cddd, cddd > 0 ? `Consq: ${cddd}m` : '');
@@ -880,7 +898,6 @@
             if (prevSectorData && ui.calculated.conseqAvail) { const prevAaa = calculateDelay(prevSectorData.sta, prevSectorData.in); ui.calculated.conseqAvail.textContent = prevAaa > 0 ? `(Consq Avail: +${prevAaa}m)` : '';
             } else if (ui.calculated.conseqAvail) { ui.calculated.conseqAvail.textContent = ''; }
             
-            // Local Times
             const stdlText = calculateLocalTime(data.std, data.fromTz);
             const stalText = calculateLocalTime(data.sta, data.toTz);
             if (ui.calculated.stdl) ui.calculated.stdl.textContent = stdlText;
@@ -890,6 +907,7 @@
             ['optiClimb1','optiClimb2','crzWind','edto'].forEach(id => {
                 const el = ui.calculated[id];
                 const val = data[id];
+                if (val === 'NIL') { el.innerHTML = 'NIL'; return; }
                 const formatters = {
                     optiClimb1: v => v && /^\d{6}$/.test(v) ? `${v.substring(0,3)}kt/<br>FL${v.substring(3)}` : v,
                     optiClimb2: v => v && /^\d{5}$/.test(v) ? `${v.substring(0,3)}kt/<br>M.${v.substring(3)}` : v,
@@ -946,7 +964,7 @@
             dateInput.type = 'text';
             flightData[currentSectorIndex].date = dateValue;
             dateInput.placeholder = formatDateForDisplay(dateValue);
-            dateInput.value = ''; // Ensure placeholder is shown
+            dateInput.value = ''; 
             propagateValueToFutureSectors('date', dateValue);
             saveAndRecalculate();
         }
@@ -979,11 +997,20 @@
             const sectorsWithData = flightData.filter(s => s && s.flightNumber);
             if (sectorsWithData.length === 0) { return; }
 
-            let yPos = 40;
-            const leftMargin = 30;
-            const valueMargin = 200;
             const pageW = doc.internal.pageSize.getWidth();
             const pageH = doc.internal.pageSize.getHeight();
+            const topMargin = 40;
+            const bottomMargin = 40;
+            let yPos = topMargin;
+            
+            const checkPageBreak = () => {
+                if (yPos > pageH - bottomMargin) {
+                    doc.addPage();
+                    yPos = topMargin;
+                    doc.setFillColor("#000033");
+                    doc.rect(0, 0, pageW, pageH, 'F');
+                }
+            };
             
             doc.setFillColor("#000033");
             doc.rect(0, 0, pageW, pageH, 'F');
@@ -999,8 +1026,12 @@
             doc.text(`${firstSector.flightNumber} / ${formatDateForDisplay(firstSector.date)}`, pageW / 2, yPos, { align: 'center' });
             yPos += 30;
             
+            const leftMargin = 30;
+            const valueMargin = 200;
+            
             const printField = (label, value) => {
                 if (!value || String(value).trim() === '' || String(value).includes('NaN')) return;
+                checkPageBreak();
                 doc.setFontSize(8);
                 doc.setTextColor("#a0a0a0");
                 doc.text(label, leftMargin, yPos, { align: 'left' });
@@ -1020,6 +1051,7 @@
             };
             
             sectorsWithData.forEach((s, index) => {
+                checkPageBreak();
                 doc.setFillColor("#007aff");
                 doc.roundedRect(leftMargin - 10, yPos - 14, pageW - (leftMargin - 10)*2, 20, 5, 5, 'F');
                 doc.setFontSize(12);
