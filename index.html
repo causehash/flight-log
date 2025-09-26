@@ -600,7 +600,7 @@
             flightData[currentSectorIndex][key] = value;
             
             if (target.classList.contains('time-input')) { value = formatTimeInput(target); }
-            if (['cic', 'fo', 'registration'].includes(key)) propagateValueToFutureSectors(key, value);
+            if (['cic', 'fo', 'registration', 'pw'].includes(key)) propagateValueToFutureSectors(key, value);
             saveAndRecalculate();
         }
 
