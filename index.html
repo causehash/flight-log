@@ -138,7 +138,7 @@
 
         /* --- Section 1: Flight Data --- */
         .flight-data-section .data-section-content { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100%; gap: 2px; }
-        .flight-data-section .field-group { flex: 1 1 65px; min-width: 60px; }
+        .flight-data-section .field-group { flex: 1 1 60px; min-width: 55px; }
         @media (min-width: 768px) { .flight-data-section .data-section-content { flex-wrap: nowrap; } }
         .input-with-tz { display: flex; flex-direction: column; align-items: center; width: 100%;}
         .timezone-input { 
@@ -254,6 +254,7 @@
                     <div class="field-group"><label for="registration">REG</label><input type="text" id="registration" class="field-value" maxlength="3" autocapitalize="characters"></div>
                     <div class="field-group"><label for="report">RPT</label><input type="text" id="report" class="field-value time-input" inputmode="numeric"></div>
                     <div class="field-group"><label for="depGate">DEP GATE</label><input type="text" id="depGate" class="field-value" maxlength="5"></div>
+                    <div class="field-group"><label for="pw">PW</label><input type="text" id="pw" class="field-value shrink-to-fit" autocapitalize="characters"></div>
                 </div>
             </section>
 
@@ -423,6 +424,7 @@
                 ui = {
                     inputs: {
                         flightNumber: document.getElementById('flightNumber'), date: document.getElementById('date'), from: document.getElementById('from'), to: document.getElementById('to'), registration: document.getElementById('registration'), report: document.getElementById('report'), depGate: document.getElementById('depGate'),
+                        pw: document.getElementById('pw'),
                         cic: document.getElementById('cic'), fo: document.getElementById('fo'),
                         out: document.getElementById('out'), taxi: document.getElementById('taxi'), off: document.getElementById('off'), on: document.getElementById('on'), in: document.getElementById('in'), std: document.getElementById('std'), eft: document.getElementById('eft'), sta: document.getElementById('sta'),
                         fromTz: document.getElementById('from-tz'), toTz: document.getElementById('to-tz'),
@@ -579,8 +581,8 @@
             if (!flightData) return;
             let value = target.value;
             
-            if (['from', 'to', 'registration', 'sid', 'star', 'trans', 'rwy'].includes(key)) {
-                value = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (['from', 'to', 'registration', 'sid', 'star', 'trans', 'rwy', 'pw'].includes(key)) {
+                value = value.toUpperCase().replace(/[^A-Z]/g, '');
             } else if (['cic', 'fo'].includes(key)) {
                 value = value.toUpperCase().replace(/[^A-Z0-9 ]/g, ''); 
             } else if (['depGate', 'arrGate'].includes(key)) {
@@ -806,8 +808,8 @@
                 if (ui.calculated.plw) ui.calculated.plw.textContent = '';
             }
 
-            const plwLimit = aircraftType === 'MAX' ? 68.3 : (aircraftType === 'NG' ? 65.3 : Infinity);
-            const plwExceeded = plw > 0 && plw > plwLimit;
+            const plwLimit = aircraftType === 'MAX' ? 68.5 : (aircraftType === 'NG' ? 65.3 : Infinity);
+            const plwExceeded = plw > 0 && plw >= plwLimit;
             const defaultColor = 'var(--text-color)';
             const redColor = 'var(--red-color)';
             const subtleColor = 'var(--subtle-text-color)';
@@ -984,7 +986,7 @@
         function clearAllSectors() { if (window.confirm("Clear all data for ALL sectors?")) { flightData = Array(6).fill(null).map(() => createEmptySector()); currentSectorIndex=0; loadDataForSector(0); saveAndRecalculate(); } }
         function renderDelayCodes() { ui.delay.container.innerHTML = ''; for (const cat in delayCodes) { const details = document.createElement('details'); details.innerHTML = `<summary>${cat}</summary>`; for (const sub in delayCodes[cat]) { if(sub) details.innerHTML += `<div style="font-weight:bold;margin-top:5px;">${sub}</div>`; for (const code in delayCodes[cat][sub]) { details.innerHTML += `<div class="delay-code-item">${code} - ${delayCodes[cat][sub][code]}</div>`; } } ui.delay.container.appendChild(details); } }
         function renderQuickReferenceDelays() { ui.delay.quickRefContainer.innerHTML = ''; const codes = ['PU', 'PN', '113', '112', '331', '332', 'PQ']; const all = {}; for(const c in delayCodes) for(const s in delayCodes[c]) for(const code in delayCodes[c][s]) all[code.toUpperCase()] = delayCodes[c][s][code]; codes.forEach(c => { if(all[c]) ui.delay.quickRefContainer.innerHTML += `<div class="delay-code-item">${c} - ${all[c]}</div>`; }); }
-        function createEmptySector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', sid: '', star: '', app: 'ILS', rwy: '', trans: '', elev: '0ft', pln: '', crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '', optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '', acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', afir: '', notam: '', remarks: '', defects: '', histBurn: '', histCarriage: '' }; }
+        function createEmptySector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', pw: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', sid: '', star: '', app: 'ILS', rwy: '', trans: '', elev: '0ft', pln: '', crew: '8', pax: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', bw: '', bi: '', cg: '', apd: '', fpr2: '', turb: '', terr: '', flightLevels: '', optiClimb1: '', optiClimb2: '', crzWind: '', crzTemp: '', crzTempSign: 'M', edto: '', arrGate: '', eta: '', acNextUseFn: '', acNextUseFrom: '', acNextUseTo: '', acNextUseStd: '', afir: '', notam: '', remarks: '', defects: '', histBurn: '', histCarriage: '' }; }
         function openModal(type) { if (!flightData) return; ui.textareas[type].value = flightData[currentSectorIndex][type] || ''; ui.modals[type].style.display = 'block'; ui.textareas[type].focus(); }
         function saveAndCloseModal(type) { if (!flightData) return; const newText = ui.textareas[type].value; flightData[currentSectorIndex][type] = newText; ui.inputs[type].value = truncateText(newText, 40); ui.modals[type].style.display = 'none'; saveAndRecalculate(); }
         function truncateText(text, length) { if (!text) return ''; return text.length <= length ? text : text.substring(0, length) + '...'; }
