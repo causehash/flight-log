@@ -560,19 +560,27 @@
         function attachFirestoreListener() {
             if (unsubscribe) unsubscribe();
             unsubscribe = onSnapshot(flightLogDocRef, (doc) => {
-                const serverData = doc.data();
-                if (serverData) {
-                    flightData = serverData.sectors || Array(6).fill(null).map(() => createEmptySector());
-                    const serverIndex = serverData.currentSectorIndex || 0;
-                    if (currentSectorIndex !== serverIndex) {
-                        currentSectorIndex = serverIndex;
+                try {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        flightData = data.sectors ? data.sectors : Array(6).fill(null).map(() => createEmptySector());
+                        currentSectorIndex = data.currentSectorIndex || 0;
+                    } else {
+                        flightData = Array(6).fill(null).map(() => createEmptySector());
+                        currentSectorIndex = 0;
+                        setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: 0 });
                     }
-                } else {
-                     flightData = Array(6).fill(null).map(() => createEmptySector());
-                     setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: 0 });
+                    loadDataForSector(currentSectorIndex);
+                } catch (e) {
+                    console.error("Error processing snapshot:", e);
+                    if (!Array.isArray(flightData)) {
+                        flightData = Array(6).fill(null).map(() => createEmptySector());
+                        loadDataForSector(currentSectorIndex);
+                    }
                 }
-                loadDataForSector(currentSectorIndex);
-            }, (error) => { console.error("Firestore listener error:", error); });
+            }, (error) => { 
+                console.error("Firestore listener error:", error);
+            });
         }
         async function saveToFirestore() { if (!flightLogDocRef || !flightData) return; try { await setDoc(flightLogDocRef, { sectors: flightData, currentSectorIndex: currentSectorIndex }, { merge: true }); } catch (error) { console.error("Error saving to Firestore: ", error); } }
         
@@ -1093,4 +1101,10 @@
     </script>
 </body>
 </html>
+
+"
+make only the following changes:
+- the app is still not offline capable. fix this.
+- there is no reason for the PW field to be there. Remove it.
+- the timezone disappears when FROM and TO are populated. it must not.
 
