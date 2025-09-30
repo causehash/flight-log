@@ -618,6 +618,13 @@
             // Handle date separately to show formatted placeholder
             ui.inputs.date.value = '';
             ui.inputs.date.placeholder = formatDateForDisplay(data.date);
+
+            // Restore timezone visibility logic on sector load
+            ['from', 'to'].forEach(key => {
+                const airportCode = data[key] || '';
+                const tzEl = ui.inputs[`${key}Tz`];
+                tzEl.style.display = (airportCode.toUpperCase() === 'SIN' || !airportCode) ? 'none' : 'block';
+            });
             
             // Update UI state
             ui.buttons.crzTempToggle.textContent = data.crzTempSign || 'M';
@@ -789,6 +796,4 @@
     </script>
 </body>
 </html>
-
-
 
