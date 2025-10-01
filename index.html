@@ -81,7 +81,7 @@
             font-size: clamp(9px, 2.2vw, 11px);
             margin-bottom: 0;
             color: var(--text-color); text-transform: uppercase;
-            font-weight: 500; cursor: default;
+            font-weight: 500; cursor: pointer;
             line-height: 1.2;
             min-height: 2.4em;
             display: flex;
@@ -108,7 +108,7 @@
         }
 
         /* Specific styling for certain fields */
-        #date.field-value::placeholder { color: var(--text-color); opacity: 1; font-size: clamp(12px, 3vw, 14px); }
+        #date.field-value::placeholder { color: var(--text-color); opacity: 1; font-size: clamp(11px, 2.5vw, 12px); }
         #cic.field-value, #fo.field-value { font-size: clamp(10px, 2.5vw, 12px); }
         select.field-value { text-align-last: center; }
         input:focus, select:focus, textarea:focus { background-color: var(--border-color); outline: 2px solid var(--focus-color); }
@@ -196,17 +196,24 @@
                     <div class="field-group"><label for="in">IN</label><input type="text" id="in" class="field-value main-time-field" inputmode="numeric"></div>
                 </div>
                 <div class="timings-sub-row">
-                    <div class="field-group"><div id="ddd" class="sub-field-value"></div></div>
+                    <div class="field-group">
+                        <div id="ddd" class="sub-field-value"></div>
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <div id="cddd" class="sub-field-value"></div>
+                            <div id="addd" class="sub-field-value"></div>
+                        </div>
+                        <div id="conseq-avail-group" class="sub-field-value"></div>
+                    </div>
                     <div class="field-group"><div id="tod" class="sub-field-value"></div></div>
                     <div class="field-group"></div>
                     <div class="field-group"><div id="tid" class="sub-field-value"></div></div>
-                    <div class="field-group"><div id="aaa" class="sub-field-value"></div></div>
-                </div>
-                 <div class="timings-sub-row">
-                    <div class="field-group"><div id="cddd" class="sub-field-value"></div><div id="addd" class="sub-field-value"></div><div id="conseq-avail-group" class="sub-field-value"></div></div>
-                    <div class="field-group"></div><div class="field-group"></div>
-                    <div class="field-group"></div>
-                    <div class="field-group"><div id="caaa" class="sub-field-value"></div><div id="aaaa" class="sub-field-value"></div></div>
+                    <div class="field-group">
+                        <div id="aaa" class="sub-field-value"></div>
+                        <div style="display: flex; gap: 5px; justify-content: center;">
+                            <div id="caaa" class="sub-field-value"></div>
+                            <div id="aaaa" class="sub-field-value"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="timings-row">
                     <div class="field-group"><label for="std">SCHEDULED OUT</label><input type="text" id="std" class="field-value main-time-field" inputmode="numeric"></div>
@@ -414,10 +421,18 @@
          * Sets up all event listeners for UI elements.
          */
         function initializeEventListeners() {
-            // Standard input listeners
+            const dateInput = ui.inputs.date;
+            dateInput.addEventListener('focus', () => { dateInput.type = 'date'; });
+            dateInput.addEventListener('blur', () => { 
+                dateInput.type = 'text'; 
+                handleInputBlur('date', dateInput);
+            });
+            dateInput.addEventListener('change', () => { handleInputBlur('date', dateInput); });
+
+            // Standard input listeners (excluding date)
             Object.keys(ui.inputs).forEach(key => {
                 const el = ui.inputs[key];
-                if (el) {
+                if (key !== 'date' && el) {
                     el.addEventListener('input', (e) => handleInputChange(key, e.target));
                     el.addEventListener('blur', (e) => handleInputBlur(key, e.target));
                     if (el.tagName !== 'TEXTAREA') { // Don't auto-select in textareas
@@ -552,15 +567,35 @@
          * Handles logic when a user leaves (blurs) an input field.
          */
         function handleInputBlur(key, target) {
-            const value = target.value.toUpperCase();
+            if (!flightData[currentSectorIndex]) return; // Guard against rare timing issues
+            let value = target.value.toUpperCase();
+
+            // Special handling for the date input
+            if (key === 'date') {
+                if (value) { // value will be YYYY-MM-DD from the picker
+                    flightData[currentSectorIndex].date = value;
+                    propagateValueToFutureSectors('date', value);
+                }
+                // Always update placeholder from data model and clear visual value
+                ui.inputs.date.placeholder = formatDateForDisplay(flightData[currentSectorIndex].date);
+                ui.inputs.date.value = ''; 
+                saveAndRecalculate();
+                return; // Stop further processing for date
+            }
+            
             flightData[currentSectorIndex][key] = value;
             
             if (key === 'flightNumber') {
                 const route = flightNumberRoutes[value];
                 if (route) {
+                    // Explicitly update the data model first to prevent race conditions
+                    flightData[currentSectorIndex].from = route.from;
+                    flightData[currentSectorIndex].to = route.to;
+                    // Then update the UI
                     ui.inputs.from.value = route.from;
                     ui.inputs.to.value = route.to;
-                    handleInputBlur('from', ui.inputs.from); // Trigger blur to update TZ
+                    // Then trigger the blur handlers for sub-updates (like timezones)
+                    handleInputBlur('from', ui.inputs.from);
                     handleInputBlur('to', ui.inputs.to);
                 }
             } else if (key === 'from' || key === 'to') {
@@ -609,10 +644,12 @@
             const data = flightData[index] || createNewSector();
             Object.keys(ui.inputs).forEach(key => {
                 const el = ui.inputs[key];
-                if (el.classList.contains('modal-trigger')) {
-                    el.value = (data[key] || '').substring(0, 40) + ((data[key] || '').length > 40 ? '...' : '');
-                } else {
-                    el.value = data[key] || '';
+                if (key !== 'date') { // Handle date separately
+                    if (el.classList.contains('modal-trigger')) {
+                        el.value = (data[key] || '').substring(0, 40) + ((data[key] || '').length > 40 ? '...' : '');
+                    } else {
+                        el.value = data[key] || '';
+                    }
                 }
             });
             // Handle date separately to show formatted placeholder
@@ -623,6 +660,7 @@
             ['from', 'to'].forEach(key => {
                 const airportCode = data[key] || '';
                 const tzEl = ui.inputs[`${key}Tz`];
+                tzEl.value = iataTimezones[airportCode.toUpperCase()] || '';
                 tzEl.style.display = (airportCode.toUpperCase() === 'SIN' || !airportCode) ? 'none' : 'block';
             });
             
@@ -649,38 +687,57 @@
             const outM = timeToMinutes(data.out), taxiM = timeToMinutes(data.taxi), offM = timeToMinutes(data.off), onM = timeToMinutes(data.on), inM = timeToMinutes(data.in);
             const stdM = timeToMinutes(data.std), staM = timeToMinutes(data.sta), eftM = timeToMinutes(data.eft);
 
-            const tod = calculateTimeDifference(taxiM, offM), tid = calculateTimeDifference(onM, inM);
-            const ddd = calculateDelay(stdM, outM), aaa = calculateDelay(staM, inM);
-            const aft = calculateTimeDifference(offM, onM), abt = calculateTimeDifference(outM, inM);
+            const tod = calculateTimeDifference(taxiM, offM);
+            const tid = calculateTimeDifference(onM, inM);
+            const ddd = calculateDelay(stdM, outM);
+            const aaa = calculateDelay(staM, inM);
+            const aft = calculateTimeDifference(offM, onM);
+            const abt = calculateTimeDifference(outM, inM);
             const blk = calculateTimeDifference(stdM, staM);
             
+            // Display basic calculations
             setFieldText(ui.calculated.blk, minutesToHHMM(blk));
             setFieldText(ui.calculated.tod, tod !== null ? `Taxi-Out: ${tod}m` : '');
             setFieldText(ui.calculated.tid, tid !== null ? `Taxi-In: ${tid}m` : '');
+
+            // Display Actuals and Differences
             setFieldText(ui.calculated.aft, aft !== null ? `Actual: ${minutesToHHMM(aft)}` : '');
+            displayDifference(ui.calculated.aftd, (aft !== null && eftM !== null) ? aft - eftM : null, 'longer', 'shorter');
             setFieldText(ui.calculated.abt, abt !== null ? `Actual: ${minutesToHHMM(abt)}` : '');
+            displayDifference(ui.calculated.abtd, (abt !== null && blk !== null) ? abt - blk : null, 'longer', 'shorter');
             
-            // Delay/Early display with colors
+            // Display Delays
             displayDifference(ui.calculated.ddd, ddd, 'late', 'early');
             displayDifference(ui.calculated.aaa, aaa, 'late', 'early');
-            displayDifference(ui.calculated.aftd, aft - eftM, 'longer', 'shorter');
-            displayDifference(ui.calculated.abtd, abt - blk, 'longer', 'shorter');
             
             // Consequential & Additional Delays
             let cddd = 0, addd = 0, caaa = 0, aaaa = 0, consqAvail = 0;
             const prevSector = currentSectorIndex > 0 ? flightData[currentSectorIndex - 1] : null;
-            if (prevSector) {
-                const prevAaa = calculateDelay(timeToMinutes(prevSector.sta), timeToMinutes(prevSector.in));
-                if (prevAaa > 0) consqAvail = prevAaa;
-            }
-            if (ddd > 0) { cddd = Math.min(ddd, consqAvail); addd = ddd - cddd; }
-            if (aaa > 0) { caaa = Math.min(aaa, ddd > 0 ? ddd : 0); aaaa = aaa - caaa; }
 
+            if (prevSector && [1, 3, 5].includes(currentSectorIndex)) {
+                const prevAaa = calculateDelay(timeToMinutes(prevSector.sta), timeToMinutes(prevSector.in));
+                if (prevAaa > 0) {
+                    consqAvail = prevAaa;
+                }
+            }
+            
+            if (ddd !== null && ddd > 0) {
+                cddd = Math.min(ddd, consqAvail);
+                addd = ddd - cddd;
+            }
+            
+            if (aaa !== null && aaa > 0) {
+                caaa = Math.min(aaa, (ddd !== null && ddd > 0 ? ddd : 0));
+                aaaa = aaa - caaa;
+            }
+            
+            // Set text content for all delay fields, showing them only if > 0
+            setFieldText(ui.calculated.conseqAvail, consqAvail > 0 ? `(Consq Avail: +${consqAvail}m)` : '');
             setFieldText(ui.calculated.cddd, cddd > 0 ? `Consq: ${cddd}m` : '');
             setFieldText(ui.calculated.addd, addd > 0 ? `Add: ${addd}m` : '');
             setFieldText(ui.calculated.caaa, caaa > 0 ? `Consq: ${caaa}m` : '');
             setFieldText(ui.calculated.aaaa, aaaa > 0 ? `Add: ${aaaa}m` : '');
-            setFieldText(ui.calculated.conseqAvail, consqAvail > 0 ? `(Consq Avail: +${consqAvail}m)` : '');
+
 
             // Local times
             setFieldText(ui.calculated.stdl, calculateLocalTime(stdM, data.fromTz));
@@ -719,10 +776,10 @@
         function calculateTimeDifference(startM, endM) { if (startM === null || endM === null) return null; let diff = endM - startM; return diff < 0 ? diff + 1440 : diff; } // Handles overnight
         function calculateDelay(schedM, actualM) { if (schedM === null || actualM === null) return null; let diff = actualM - schedM; if (diff > 720) diff -= 1440; if (diff < -720) diff += 1440; return diff; }
         function calculateLocalTime(utcM, offset) { if (utcM === null || !offset) return ''; const o = parseFloat(offset) * 60; return isNaN(o) ? '' : `${minutesToHHMM((utcM + o + 1440) % 1440)} LT`; }
-        function formatDateForDisplay(dStr) { if (!dStr) return ''; const d = new Date(dStr + 'T00:00:00'); return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', weekday: 'short', timeZone: 'UTC' }); }
+        function formatDateForDisplay(dStr) { if (!dStr) return ''; const d = new Date(dStr + 'T00:00:00'); return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', weekday: 'short', timeZone: 'UTC' }).replace(/,/g, ''); }
         function setTomorrowDate() { const t = new Date(); t.setDate(t.getDate() + 1); const y = t.getFullYear(), m = (t.getMonth()+1).toString().padStart(2,'0'), d = t.getDate().toString().padStart(2,'0'); const dateValue = `${y}-${m}-${d}`; flightData[currentSectorIndex].date = dateValue; propagateValueToFutureSectors('date', dateValue); saveAndRecalculate(); loadDataForSector(currentSectorIndex); }
         function setFieldText(el, text, color) { if(el) { el.textContent = text; if(color) el.style.color = color; } }
-        function displayDifference(el, diff, positiveText, negativeText) { if (diff > 0) setFieldText(el, `${diff}m ${positiveText}`, 'var(--red-color)'); else if (diff < 0) setFieldText(el, `${-diff}m ${negativeText}`, 'var(--green-color)'); else setFieldText(el, ''); }
+        function displayDifference(el, diff, positiveText, negativeText) { if (diff === null || isNaN(diff)) { setFieldText(el, ''); return; } if (diff > 0) setFieldText(el, `${diff}m ${positiveText}`, 'var(--red-color)'); else if (diff < 0) setFieldText(el, `${-diff}m ${negativeText}`, 'var(--green-color)'); else setFieldText(el, ''); }
         function propagateValueToFutureSectors(key, val) { for (let i = currentSectorIndex + 1; i < 6; i++) flightData[i][key] = val; }
         function autoCalculateReportTime(std) { const stdM = timeToMinutes(std); if (stdM !== null) { const rpt = minutesToHHMM((stdM - 60 + 1440) % 1440); flightData[0].report = rpt; ui.inputs.report.value = rpt; } }
         function switchSector(index) { if (currentSectorIndex !== index) { currentSectorIndex = index; loadDataForSector(index); saveToFirestore(); } }
