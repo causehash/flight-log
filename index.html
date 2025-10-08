@@ -236,6 +236,7 @@
                 <div class="field-group"><label for="ezfw1">EZFW 1</label><input type="text" id="ezfw1" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="ezfw2">EZFW 2</label><input type="text" id="ezfw2" class="field-value" inputmode="numeric"></div>
                 <div class="field-group"><label for="azfw">AZFW</label><input type="text" id="azfw" class="field-value" inputmode="numeric"><div id="mzfw" class="sub-field-value weight-limit"></div></div>
+                <div class="field-group"><label for="cg">MACTOW</label><input type="text" id="cg" class="field-value" inputmode="numeric" maxlength="3"></div>
                 <div class="field-group"><label for="ptow">PTOW</label><div id="ptow" class="calculated"></div><div id="mtow" class="sub-field-value weight-limit"></div></div>
                 <div class="field-group"><label id="plw-label" for="plw">PLW</label><div id="plw" class="calculated"></div><div id="mlw" class="sub-field-value weight-limit"></div></div>
                 
@@ -381,6 +382,7 @@
                     out: document.getElementById('out'), taxi: document.getElementById('taxi'), off: document.getElementById('off'), on: document.getElementById('on'), in: document.getElementById('in'), std: document.getElementById('std'), eft: document.getElementById('eft'), sta: document.getElementById('sta'),
                     fromTz: document.getElementById('from-tz'), toTz: document.getElementById('to-tz'),
                     pln: document.getElementById('pln'), ezfw1: document.getElementById('ezfw1'), ezfw2: document.getElementById('ezfw2'), azfw: document.getElementById('azfw'),
+                    cg: document.getElementById('cg'),
                     fuel: document.getElementById('fuel'), burn: document.getElementById('burn'), altn: document.getElementById('altn'), thirtyMin: document.getElementById('thirtyMin'), cont: document.getElementById('cont'),
                     crzWind: document.getElementById('crzWind'), crzTemp: document.getElementById('crzTemp'), 
                     opti1: document.getElementById('opti1'), opti2: document.getElementById('opti2'), apd: document.getElementById('apd'),
@@ -422,12 +424,24 @@
          */
         function initializeEventListeners() {
             const dateInput = ui.inputs.date;
+            // Show date picker on focus
             dateInput.addEventListener('focus', () => { dateInput.type = 'date'; });
+            // On blur, revert to text to show placeholder, but don't clear data
             dateInput.addEventListener('blur', () => { 
                 dateInput.type = 'text'; 
-                handleInputBlur('date', dateInput);
+                // Update placeholder from model data
+                ui.inputs.date.placeholder = formatDateForDisplay(flightData[currentSectorIndex].date);
             });
-            dateInput.addEventListener('change', () => { handleInputBlur('date', dateInput); });
+            // On change (date selected), save data immediately
+            dateInput.addEventListener('change', (e) => {
+                const value = e.target.value;
+                if (value) {
+                    flightData[currentSectorIndex].date = value;
+                    propagateValueToFutureSectors('date', value);
+                }
+                ui.inputs.date.placeholder = formatDateForDisplay(flightData[currentSectorIndex].date);
+                saveAndRecalculate();
+            });
 
             // Standard input listeners (excluding date)
             Object.keys(ui.inputs).forEach(key => {
@@ -567,20 +581,14 @@
          * Handles logic when a user leaves (blurs) an input field.
          */
         function handleInputBlur(key, target) {
-            if (!flightData[currentSectorIndex]) return; // Guard against rare timing issues
+            if (!flightData || !flightData[currentSectorIndex]) return; 
             let value = target.value.toUpperCase();
 
-            // Special handling for the date input
+            // Special handling for the date input - it's mostly handled by 'change' now
             if (key === 'date') {
-                if (value) { // value will be YYYY-MM-DD from the picker
-                    flightData[currentSectorIndex].date = value;
-                    propagateValueToFutureSectors('date', value);
-                }
-                // Always update placeholder from data model and clear visual value
+                target.type = 'text'; // Revert to text to show placeholder
                 ui.inputs.date.placeholder = formatDateForDisplay(flightData[currentSectorIndex].date);
-                ui.inputs.date.value = ''; 
-                saveAndRecalculate();
-                return; // Stop further processing for date
+                return;
             }
             
             flightData[currentSectorIndex][key] = value;
@@ -588,13 +596,10 @@
             if (key === 'flightNumber') {
                 const route = flightNumberRoutes[value];
                 if (route) {
-                    // Explicitly update the data model first to prevent race conditions
                     flightData[currentSectorIndex].from = route.from;
                     flightData[currentSectorIndex].to = route.to;
-                    // Then update the UI
                     ui.inputs.from.value = route.from;
                     ui.inputs.to.value = route.to;
-                    // Then trigger the blur handlers for sub-updates (like timezones)
                     handleInputBlur('from', ui.inputs.from);
                     handleInputBlur('to', ui.inputs.to);
                 }
@@ -610,12 +615,21 @@
             } else if (key === 'registration') {
                 target.value = `9V-${value}`;
                 flightData[currentSectorIndex][key] = target.value;
+            } else if (key === 'cg') {
+                 const num = parseInt(value, 10);
+                 if (!isNaN(num)) {
+                     target.value = (num / 10).toFixed(1) + '%';
+                     flightData[currentSectorIndex][key] = target.value;
+                 }
             }
+
 
             // Auto-focus logic
             if (key === 'taxi') ui.inputs.off.focus();
             if (key === 'on') ui.inputs.in.focus();
             if (key === 'crzWind') ui.inputs.crzTemp.focus();
+            if (key === 'std') ui.inputs.sta.focus();
+            if (key === 'azfw') ui.inputs.cg.focus();
 
             // Auto-calculate report time for sector 1
             if (key === 'std' && currentSectorIndex === 0) {
@@ -679,6 +693,7 @@
          * The core calculation engine. Updates all derived values on the screen.
          */
         function updateAllCalculations() {
+            if (!flightData || !flightData[currentSectorIndex]) return;
             const data = flightData[currentSectorIndex];
             const aircraftType = getAircraftType();
             const limits = aircraftType ? aircraftLimits[aircraftType] : {};
@@ -791,7 +806,7 @@
         
         // --- Data Structure Creators ---
         function createNewFlightData() { return Array(6).fill(null).map(() => createNewSector()); }
-        function createNewSector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', pln: '', ezfw1: '', ezfw2: '', azfw: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', crzWind: '', crzTemp: '', crzTempSign: 'M', opti1: '', opti2: '', apd: '', afir: '', notam: '', defects: '', remarks: '' }; }
+        function createNewSector() { return { flightNumber: '', date: '', from: '', to: '', fromTz: '', toTz: '', cic: '', fo: '', registration: '', report: '', depGate: '', out: '', taxi: '', off: '', on: '', in: '', std: '', eft: '', sta: '', pln: '', ezfw1: '', ezfw2: '', azfw: '', cg: '', fuel: '', burn: '', altn: '', thirtyMin: '', cont: '', crzWind: '', crzTemp: '', crzTempSign: 'M', opti1: '', opti2: '', apd: '', afir: '', notam: '', defects: '', remarks: '' }; }
 
         // --- Modals & Delay Code Rendering ---
         function renderDelayCodes() { ui.delay.container.innerHTML = Object.entries(delayCodes).map(([cat, subs]) => `<details><summary>${cat}</summary>${Object.entries(subs).map(([sub, codes]) => (sub ? `<div><strong>${sub}</strong></div>` : '') + Object.entries(codes).map(([code, desc]) => `<div class="delay-code-item">${code} - ${desc}</div>`).join('')).join('')}</details>`).join(''); }
